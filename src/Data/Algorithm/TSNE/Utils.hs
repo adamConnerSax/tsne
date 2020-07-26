@@ -6,7 +6,7 @@ import qualified Data.Massiv.Core as MA
 import qualified Data.Massiv.Array as MA
 import qualified Data.Massiv.Array.Numeric as MA
 import qualified Data.Massiv.Core.Operations as MA
-import qualified Data.Massiv.Vector as MV
+import qualified Data.Massiv.Vector as MA
 
 infinity :: Double
 infinity = read "Infinity"
@@ -63,8 +63,34 @@ symmetricalMatrixFromTopRight tr = zipWith (++) bl tr
 
 
 --
-distanceSquaredM :: MA.MonadThrow m => MA.Numeric r Double => MV.Vector r Double -> MV.Vector r Double -> m Double
+distanceSquaredM :: (MA.Source r MA.Ix1 Double
+                    , MA.MonadThrow m)
+                 => MA.Numeric r Double => MA.Vector r Double -> MA.Vector r Double -> m Double
 distanceSquaredM as bs = fmap MA.sum $ (MA..*.) as bs
+{-# INLINEABLE distanceSquaredM #-}
 
---symmetrizeM :: MA.Numeric r Double => Matrix r Double -> Matrix r Double
---symmetrizeM 
+-- this is now delayed.
+symmetrizeSqM :: (MA.Numeric r Double
+                 , MA.Source r MA.Ix2 Double)
+              => MA.Matrix r Double -> MA.Matrix MA.D Double
+symmetrizeSqM m = MA.zipWith f m (MA.transpose m) where
+  MA.Sz2 r _ = MA.size m 
+  f :: Double -> Double -> Double
+  f x y = max a 1e-100
+    where a = (x + y) / (2 * realToFrac r) 
+{-# INLINEABLE symmetrizeSqM #-}
+
+{-
+recenter :: [[Double]] -> [[Double]]
+recenter ss = map r ss
+    where 
+        r s = subtract (mean s) <$> s
+        mean s = sum s / (realToFrac.length) s
+-}
+recenterM :: MA.Matrix r Double -> MA.Matrix MA.D Double
+recenterM m = MA.imap f m 
+    where
+        f :: MA.Ix2 -> Double -> Double
+        f ix x = let MA.Sz2 (r MA.:> c) = ix in x - (means !> r)
+        means v = fmap (/realToFrac c) $ MA.foldlInner (+) 0 m
+        MA.Sz2 _ c = MA.size m
