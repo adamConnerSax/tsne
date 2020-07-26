@@ -17,5 +17,5 @@ report.html
 *.ps
 *.aux
 *.png
-.knit-haskell-cache
-.knit-haskell-cache2
+get-pip.py
+scikit_learn_digits_data.txt
