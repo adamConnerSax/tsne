@@ -5,6 +5,8 @@ module Data.Algorithm.TSNE.Types where
 import GHC.Generics (Generic)
 import Control.DeepSeq
 import Data.Default
+import qualified Data.Massiv.Core as MA
+import qualified Data.Massiv.Array as MA
 
 
 data TSNEOptions = TSNEOptions {
@@ -45,4 +47,34 @@ data TSNEState = TSNEState {
     stSolution :: [[Double]],
     stGains :: [[Gain]],
     stDeltas :: [[Delta]]
+} deriving (Show, Generic, NFData)
+
+
+-- Massiv Versions
+
+--type Position2Dm = V.Vector U Double
+--type Position3Dm = V.Vector U Double
+
+type TSNEInputValue_M =  MA.Vector MA.U Double
+type TSNEInput_M =  MA.Matrix MA.U Double 
+
+data TSNEOutput3D_M = TSNEOutput3D_M {
+    tsneIteration3D_M :: Int,
+    tsneSolution3_M :: [Position3D], -- Only if this is only for output.  Otherwise we need better.
+    tsneCost3D_M :: Double
+} deriving (Show, Eq)
+
+
+data TSNEOutput2D_M = TSNEOutput2D_M {
+    tsneIteration2D_M :: Int,
+    tsneSolution2D_M :: [Position2D], -- Only if this is only for output.  Otherwise we need better.
+    tsneCost2D_M :: Double
+} deriving (Show, Eq)
+
+
+data TSNEState_M = TSNEState_M {
+    stIteration_M :: Int,
+    stSolution_M :: MA.Matrix MA.U Double,
+    stGains_M :: MA.Matrix MA.U Gain,
+    stDeltas_M :: MA.Matrix MA.U Delta
 } deriving (Show, Generic, NFData)

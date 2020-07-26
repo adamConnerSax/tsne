@@ -1,6 +1,12 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Data.Algorithm.TSNE.Utils where
 
 import Data.List(foldr, transpose)
+import qualified Data.Massiv.Core as MA
+import qualified Data.Massiv.Array as MA
+import qualified Data.Massiv.Array.Numeric as MA
+import qualified Data.Massiv.Core.Operations as MA
+import qualified Data.Massiv.Vector as MV
 
 infinity :: Double
 infinity = read "Infinity"
@@ -56,3 +62,9 @@ symmetricalMatrixFromTopRight tr = zipWith (++) bl tr
 
 
 
+--
+distanceSquaredM :: MA.MonadThrow m => MA.Numeric r Double => MV.Vector r Double -> MV.Vector r Double -> m Double
+distanceSquaredM as bs = fmap MA.sum $ (MA..*.) as bs
+
+--symmetrizeM :: MA.Numeric r Double => Matrix r Double -> Matrix r Double
+--symmetrizeM 
