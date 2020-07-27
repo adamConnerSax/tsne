@@ -55,8 +55,8 @@ data TSNEState = TSNEState {
 --type Position2Dm = V.Vector U Double
 --type Position3Dm = V.Vector U Double
 
-type TSNEInputValue_M =  MA.Vector MA.U Double
-type TSNEInput_M =  MA.Matrix MA.U Double 
+type TSNEInputValueM =  MA.Vector MA.U Double
+type TSNEInputM =  MA.Matrix MA.U Double 
 
 data TSNEOutput3D_M = TSNEOutput3D_M {
     tsneIteration3D_M :: Int,
@@ -72,9 +72,9 @@ data TSNEOutput2D_M = TSNEOutput2D_M {
 } deriving (Show, Eq)
 
 
-data TSNEState_M = TSNEState_M {
-    stIteration_M :: Int,
-    stSolution_M :: MA.Matrix MA.U Double,
-    stGains_M :: MA.Matrix MA.U Gain,
-    stDeltas_M :: MA.Matrix MA.U Delta
+data TSNEStateM = TSNEStateM {
+    stIterationM :: Int,
+    stSolutionM :: MA.Matrix MA.U Double,
+    stGainsM :: MA.Matrix MA.U Gain,
+    stDeltasM :: MA.Matrix MA.U Delta
 } deriving (Show, Generic, NFData)

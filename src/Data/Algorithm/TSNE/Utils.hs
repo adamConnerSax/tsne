@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 module Data.Algorithm.TSNE.Utils where
 
 import Data.List(foldr, transpose)
@@ -63,11 +65,14 @@ symmetricalMatrixFromTopRight tr = zipWith (++) bl tr
 
 
 
---
+-- Massiv versions
+
 distanceSquaredM :: (MA.Source r MA.Ix1 Double
-                    , MA.MonadThrow m)
-                 => MA.Numeric r Double => MA.Vector r Double -> MA.Vector r Double -> m Double
-distanceSquaredM as bs = fmap MA.sum $ (MA..*.) as bs
+                    , MA.Source r' MA.Ix1 Double
+                    )
+
+                 => MA.Numeric r Double => MA.Vector r Double -> MA.Vector r' Double -> Double
+distanceSquaredM as bs = let v = MA.zipWith (-) as bs in MA.sum $ MA.zipWith (*) v v 
 {-# INLINEABLE distanceSquaredM #-}
 
 -- this is now delayed.
@@ -83,29 +88,52 @@ symmetrizeSqM m = MA.zipWith f m (MA.transpose m) where
 
 recenterM :: (MA.Source r MA.Ix2 Double
              , MA.Construct r MA.Ix2 Double
-             , MA.Numeric r Double
+             , MA.Numeric r Double -- this required r be Delayed
              , MA.MonadThrow m
               )
           => MA.Matrix r Double -> m (MA.Matrix r Double)
 recenterM m = m MA..-. meansM 
     where
---        f :: MA.Ix2 -> Double -> Double
---        f ix x = let (r MA.:. c) = ix in x - (means MA.! r)
---        meansM :: MA.Matrix r Double
         meansM = MA.makeArray MA.Seq (MA.Sz2 r c) (\ix -> let (r MA.:. c) = ix in meansV MA.! r)
         meansV :: MA.Vector MA.U Double
         meansV = MA.compute $ fmap (/realToFrac c) $ MA.foldlInner (+) 0 m
         MA.Sz2 r c = MA.size m
 {-# INLINEABLE recenterM #-}
 
-symmetricalMatrixFromTopRightM :: (MA.Load r MA.Ix2 Double
-                                  , MA.Construct r MA.Ix2 Double
-                                  , MA.Manifest r MA.Ix2 Double)
+-- compute upper triangle and then we symmetrize
+-- (i, j) element is distance between ith and jth row
+-- TODO: try making upper triangle computation parallel
+qdistM ::
+  forall r.(MA.Source (MA.R r) MA.Ix1 Double
+          , MA.OuterSlice r MA.Ix2 Double
+          , MA.Mutable r MA.Ix2 Double
+          )
   => MA.Matrix r Double -> MA.Matrix r Double
-symmetricalMatrixFromTopRightM tr =
-  let MA.Sz2 r c = MA.size tr
-      sSize = min r c
-  in MA.makeArray MA.Seq (MA.Sz2 sSize sSize) (\ix -> let (r MA.:. c) = ix in if c >= r then tr MA.! ix else tr MA.! (c MA.:. r))
-{-# INLINEABLE symmetricalMatrixFromTopRightM #-}
+qdistM ss =
+  let ssTr = MA.transpose ss
+      MA.Sz2 r c = MA.size ssTr
+      eDist a b = (a - b)^^2
+      dist ix =
+        let (i MA.:. j) = ix 
+            s = MA.sum $ MA.zipWith eDist (ssTr MA.!> i) (ssTr MA.!> j)
+        in 1 / (1 + s)
+      upperTri = MA.compute @r $ MA.upperTriangular MA.Seq (MA.Sz1 r) dist
+  in MA.makeArray MA.Seq (MA.Sz2 r r) $ \(i MA.:. j) ->
+    case compare i j of
+      EQ -> 0
+      LT -> upperTri MA.! (i MA.:. j)
+      GT -> upperTri MA.! (j MA.:. i)
+{-# INLINEABLE qdistM #-}                
 
 
+qdistM' :: (MA.Source (MA.R r) MA.Ix1 Double
+          , MA.OuterSlice r MA.Ix2 Double
+          , MA.Mutable r MA.Ix2 Double
+          )
+        => MA.Matrix r Double -> MA.Matrix MA.D Double
+qdistM' ss =
+  let qd = qdistM ss
+      sumQD = MA.sum qd
+      f q = max (q / sumQD) 1e-100        
+  in MA.map f qd
+{-# INLINEABLE qdistM' #-}

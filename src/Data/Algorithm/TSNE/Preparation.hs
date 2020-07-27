@@ -3,6 +3,8 @@ module Data.Algorithm.TSNE.Preparation where
 import Data.Algorithm.TSNE.Types
 import Data.Algorithm.TSNE.Utils
 
+import qualified Data.Massiv.Array as MA
+import qualified Data.Monoid as Monoid
 
 targetEntropy :: TSNEOptions -> Entropy
 targetEntropy = log.realToFrac.tsnePerplexity
@@ -61,5 +63,41 @@ entropyForInputValue beta bs a = sum $ map h bs
             | a == b    = 0
             | otherwise = exp $ -(distanceSquared a b) * beta 
         pj' b = pj b / psum
+
+
+
+-- Massiv versions
+--neighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix r Probability 
+--neighbourProbabilitiesM opts vs = symmetrizeSqM $ rawNeighbourProbabilitiesM opts vs
+
+{-
+rawNeighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix r Probability
+rawNeighbourProbabilitiesM opts vs = map np vs
+    where 
+        np a = aps (beta a) vs a
+        beta a = betaValue $ binarySearchBeta opts vs a
+
+        aps :: Double -> TSNEInput -> TSNEInputValue -> [Probability]
+        aps beta bs a = map pj' bs
+            where
+                psum = sum $ map pj bs
+                pj b 
+                    | a == b    = 0
+                    | otherwise = exp $ -(distanceSquared a b) * beta 
+                pj' b = pj b / psum
+-}
+
+
+entropyForInputValueM :: Double -> TSNEInputM -> TSNEInputValueM -> Entropy
+entropyForInputValueM beta bs a = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ h r) bs
+  where
+--    pj :: MA.Vector MA.U Double -> Double
+    pj b
+      | a == b = 0
+      | otherwise = exp $ -(distanceSquaredM a b) * beta
+    psum :: Double  
+    psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
+    pj' b = pj b / psum
+    h b = let x = pj' b in if x > 1e-7 then -x * log x else 0
 
 
