@@ -6,6 +6,7 @@ import qualified Data.Massiv.Core as MA
 import qualified Data.Massiv.Array as MA
 import qualified Data.Massiv.Array.Numeric as MA
 import qualified Data.Massiv.Core.Operations as MA
+import qualified Data.Massiv.Array.Stencil as MA
 import qualified Data.Massiv.Vector as MA
 
 infinity :: Double
@@ -80,17 +81,31 @@ symmetrizeSqM m = MA.zipWith f m (MA.transpose m) where
     where a = (x + y) / (2 * realToFrac r) 
 {-# INLINEABLE symmetrizeSqM #-}
 
-{-
-recenter :: [[Double]] -> [[Double]]
-recenter ss = map r ss
-    where 
-        r s = subtract (mean s) <$> s
-        mean s = sum s / (realToFrac.length) s
--}
-recenterM :: MA.Matrix r Double -> MA.Matrix MA.D Double
-recenterM m = MA.imap f m 
+recenterM :: (MA.Source r MA.Ix2 Double
+             , MA.Construct r MA.Ix2 Double
+             , MA.Numeric r Double
+             , MA.MonadThrow m
+              )
+          => MA.Matrix r Double -> m (MA.Matrix r Double)
+recenterM m = m MA..-. meansM 
     where
-        f :: MA.Ix2 -> Double -> Double
-        f ix x = let MA.Sz2 (r MA.:> c) = ix in x - (means !> r)
-        means v = fmap (/realToFrac c) $ MA.foldlInner (+) 0 m
-        MA.Sz2 _ c = MA.size m
+--        f :: MA.Ix2 -> Double -> Double
+--        f ix x = let (r MA.:. c) = ix in x - (means MA.! r)
+--        meansM :: MA.Matrix r Double
+        meansM = MA.makeArray MA.Seq (MA.Sz2 r c) (\ix -> let (r MA.:. c) = ix in meansV MA.! r)
+        meansV :: MA.Vector MA.U Double
+        meansV = MA.compute $ fmap (/realToFrac c) $ MA.foldlInner (+) 0 m
+        MA.Sz2 r c = MA.size m
+{-# INLINEABLE recenterM #-}
+
+symmetricalMatrixFromTopRightM :: (MA.Load r MA.Ix2 Double
+                                  , MA.Construct r MA.Ix2 Double
+                                  , MA.Manifest r MA.Ix2 Double)
+  => MA.Matrix r Double -> MA.Matrix r Double
+symmetricalMatrixFromTopRightM tr =
+  let MA.Sz2 r c = MA.size tr
+      sSize = min r c
+  in MA.makeArray MA.Seq (MA.Sz2 sSize sSize) (\ix -> let (r MA.:. c) = ix in if c >= r then tr MA.! ix else tr MA.! (c MA.:. r))
+{-# INLINEABLE symmetricalMatrixFromTopRightM #-}
+
+
