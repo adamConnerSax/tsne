@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
 module Data.Algorithm.TSNE.Stepping where
 
 import Control.Applicative
@@ -12,6 +13,8 @@ import Data.Algorithm.TSNE.Utils
 import qualified Data.Massiv.Array as MA
 
 import Data.Coerce (coerce)
+import Data.Foldable as F (toList, length)
+import qualified Data.List as L (uncons)
 
 stepTSNE :: TSNEOptions -> TSNEInput -> [[Probability]] -> TSNEState -> TSNEState
 stepTSNE opts vs ps st = TSNEState i' s'' g' d'
@@ -65,23 +68,23 @@ cost pss st = sumsum $ (zipWith.zipWith) c pss (qdist' (stSolution st))
 
 -- massiv versions
 
-gradientsM :: MA.Matrix r Probability -> TSNEStateM -> MA.Matrix MA.D Gradient
-gradientsM pss st = asMatrixM cols $ MA.map gradient (asVectorsM ss)
+gradientsM :: MA.Matrix MA.U Probability -> TSNEStateM -> MA.Vector MA.D (MA.Vector MA.D Gradient) --m (MA.Matrix MA.D Gradient)
+gradientsM pss st = MA.map gradient (asVectorsM ss)
     where
-        gradient :: MA.Vector r Double -> MA.Vector r Gradient
+        gradient :: MA.Vector MA.M Double -> MA.Vector MA.D Gradient
         gradient s = zipWith4M (f s) s (asVectorsM pss) (asVectorsM qss) (asVectorsM qss')
         ss = stSolutionM st -- MA.Matrix MA.U Double
         MA.Sz2 _ cols = MA.size ss
-        i = stIteration st -- Int
+        i = stIterationM st -- Int
         qss = qdistM ss -- MA.Matrix MA.D Double 
         qss' = qdistM' ss -- MA.Matrix MA.D Double 
-        f :: (MA.Source r MA.Ix1 Double)
+{-        f :: (MA.Source r MA.Ix1 Double)
           => MA.Vector r Double
           -> Double
           -> MA.Vector r Double
           -> MA.Vector r Double
           -> MA.Vector r Double
-          -> Gradient
+          -> Gradient -}
         f s x ps qs qs' = MA.sum $ zipWith4M g s ps qs qs'
             where
                 g y p q q' = m * (x - y)

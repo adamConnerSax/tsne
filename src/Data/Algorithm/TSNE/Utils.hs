@@ -10,6 +10,11 @@ import qualified Data.Massiv.Array.Numeric as MA
 import qualified Data.Massiv.Core.Operations as MA
 import qualified Data.Massiv.Array.Stencil as MA
 import qualified Data.Massiv.Vector as MA
+import qualified Data.Massiv.Array.Unsafe as MA
+
+import Data.Foldable as F (toList, length)
+import qualified Data.List as L (uncons)
+import Data.Proxy (Proxy(..))
 
 infinity :: Double
 infinity = read "Infinity"
@@ -153,7 +158,7 @@ zipWith4M :: (MA.Index ix
 zipWith4M f a1 a2 a3 a4 = MA.zipWith (\(e1, e2) (e3, e4) ->  f e1 e2 e3 e4) (MA.zip a1 a2) (MA.zip a3 a4)
 {-# INLINEABLE zipWith4M #-}
 
-asVectorsM :: (MA.Load r MA.Ix2 e
+asVectorsM :: forall e r.(MA.Load r MA.Ix2 e
               , MA.Construct r MA.Ix1 (MA.Vector (MA.R r) e)
               , MA.OuterSlice r MA.Ix2 e
               )
@@ -164,7 +169,28 @@ asVectorsM m =
 
 -- The issue here is that the vectors might not all be the same size.  So we give a size and raise and exception (??)
 -- if we're wrong
-asMatrixM :: (MA.Manifest r MA.Ix1 (MA.Array r' MA.Ix1 e)
-            , MA.OuterSlice r' MA.Ix1 e
-            ) => Int -> MA.Vector r (MA.Vector r' e) -> MA.Matrix MA.D e 
+asMatrixM ::
+  forall e r r'
+  .(MA.Manifest r MA.Ix1 (MA.Array r' MA.Ix1 e)
+   , MA.OuterSlice r' MA.Ix1 e
+   ) => Int -> MA.Vector r (MA.Vector r' e) -> MA.Matrix MA.D e 
 asMatrixM cols vs = MA.expandWithin MA.Dim1 (MA.Sz1 cols) (\v j -> v MA.!> j) vs
+
+
+fromOuterSlices ::
+     forall r r' ix e f m.
+     ( MA.Construct r ix e
+     , MA.Source r' (MA.Lower ix) e
+     , MA.Mutable r (MA.Lower ix) e
+     , MA.Resize r (MA.Lower ix)
+     , Foldable f
+     , MA.MonadThrow m
+     )
+  => f (MA.Array r' (MA.Lower ix) e)
+  -> m (MA.Array r ix e)
+fromOuterSlices arrsF =
+  case L.uncons (F.toList arrsF) of
+    Nothing -> pure MA.empty
+    Just (a, _) -> do
+      arr <- MA.concatM (MA.dimensions (Proxy :: Proxy (MA.Lower ix))) arrsF
+      MA.resizeM (MA.consSz (MA.SafeSz (F.length arrsF)) (MA.size a)) $ MA.compute arr
