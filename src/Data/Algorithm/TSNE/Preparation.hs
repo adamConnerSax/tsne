@@ -74,7 +74,7 @@ entropyForInputValue beta bs a = sum $ map h bs
 
 neighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability
 neighbourProbabilitiesM opts vs = MA.computeAs MA.U $ symmetrizeSqM $ MA.delay $ rawNeighbourProbabilitiesM opts vs
-
+{-# INLINEABLE neighbourProbabilitiesM #-}
 
 
 rawNeighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability
@@ -97,7 +97,7 @@ rawNeighbourProbabilitiesM opts vs = MA.computeAs MA.U
             psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj (MA.computeAs MA.U r)) bs
             pj' :: MA.Vector MA.U Double -> Double
             pj' b = pj b / psum
-
+{-# INLINEABLE rawNeighbourProbabilitiesM #-}
 
 binarySearchBetaM :: TSNEOptions -> TSNEInputM -> TSNEInputValueM -> Beta
 binarySearchBetaM opts vs = binarySearchBetaM' opts vs 1e-4 0 (Beta 1 (-infinity) infinity)
