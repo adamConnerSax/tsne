@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
 module Data.Algorithm.TSNE.Preparation where
 
 import Data.Algorithm.TSNE.Types
@@ -67,37 +69,70 @@ entropyForInputValue beta bs a = sum $ map h bs
 
 
 -- Massiv versions
---neighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix r Probability 
---neighbourProbabilitiesM opts vs = symmetrizeSqM $ rawNeighbourProbabilitiesM opts vs
+-- We are forcing a lot of things to be MA.U (unboxed) here.
+-- This is un-delaying things, I think.
 
-{-
-rawNeighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix r Probability
-rawNeighbourProbabilitiesM opts vs = map np vs
-    where 
-        np a = aps (beta a) vs a
-        beta a = betaValue $ binarySearchBeta opts vs a
+neighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability
+neighbourProbabilitiesM opts vs = MA.computeAs MA.U $ symmetrizeSqM $ MA.delay $ rawNeighbourProbabilitiesM opts vs
 
-        aps :: Double -> TSNEInput -> TSNEInputValue -> [Probability]
-        aps beta bs a = map pj' bs
-            where
-                psum = sum $ map pj bs
-                pj b 
-                    | a == b    = 0
-                    | otherwise = exp $ -(distanceSquared a b) * beta 
-                pj' b = pj b / psum
--}
 
+
+rawNeighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability
+rawNeighbourProbabilitiesM opts vs = MA.computeAs MA.U
+                                     $ MA.expandWithin @_ @_ @MA.N MA.Dim1 (MA.Sz1 inputRows) (\r j -> r MA.! j)
+                                     $ MA.makeArray MA.Seq (MA.Sz1 inputRows) $ \r -> np (MA.computeAs MA.U $ vs MA.!> r)
+    where
+        np :: TSNEInputValueM -> MA.Vector MA.U Probability
+        np a = MA.computeAs MA.U $ aps (beta a) vs a
+        beta a = betaValue $ binarySearchBetaM opts vs a
+        MA.Sz2 inputRows inputCols = MA.size vs
+        aps :: Double -> TSNEInputM -> MA.Vector MA.U Double -> MA.Vector MA.U Probability
+        aps beta bs a = MA.makeArray MA.Seq (MA.Sz1 inputRows) (\r -> pj' (MA.computeAs MA.U $ vs MA.!> r))
+          where
+            pj :: MA.Vector MA.U Double -> Double
+            pj b
+              | a == b = 0
+              | otherwise = exp $ -(distanceSquaredM (MA.delay a) (MA.delay b)) * beta
+            psum :: Double  
+            psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj (MA.computeAs MA.U r)) bs
+            pj' :: MA.Vector MA.U Double -> Double
+            pj' b = pj b / psum
+
+
+binarySearchBetaM :: TSNEOptions -> TSNEInputM -> TSNEInputValueM -> Beta
+binarySearchBetaM opts vs = binarySearchBetaM' opts vs 1e-4 0 (Beta 1 (-infinity) infinity)
+{-# INLINEABLE binarySearchBetaM #-}
+
+binarySearchBetaM' :: TSNEOptions -> TSNEInputM -> Double -> Int -> Beta -> TSNEInputValueM -> Beta
+binarySearchBetaM' opts bs tol i beta a
+    | i == 50            = beta
+    | abs (e - t) < tol  = beta
+    | e > t              = r $ incPrecision beta
+    | otherwise          = r $ decPrecision beta 
+        where
+            t = targetEntropy opts
+            e = entropyForInputValueM (betaValue beta) bs a
+            incPrecision (Beta b _ bmax) 
+                | bmax == infinity = Beta (b * 2) b bmax
+                | otherwise        = Beta ((b + bmax) / 2) b bmax
+            decPrecision (Beta b bmin _) 
+                | bmin == -infinity = Beta (b / 2) bmin b
+                | otherwise         = Beta ((b + bmin) / 2) bmin b
+            r beta' = binarySearchBetaM' opts bs tol (i+1) beta' a 
+{-# INLINEABLE binarySearchBetaM' #-}
 
 entropyForInputValueM :: Double -> TSNEInputM -> TSNEInputValueM -> Entropy
 entropyForInputValueM beta bs a = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ h r) bs
   where
---    pj :: MA.Vector MA.U Double -> Double
+    pj :: MA.Vector MA.M Double -> Double
     pj b
-      | a == b = 0
-      | otherwise = exp $ -(distanceSquaredM a b) * beta
+      | (MA.toManifest a) == b = 0
+      | otherwise = exp $ -(distanceSquaredM (MA.delay a) (MA.delay b)) * beta
     psum :: Double  
     psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
+    pj' :: MA.Vector MA.M Double -> Double
     pj' b = pj b / psum
+    h :: MA.Vector MA.M Double -> Double
     h b = let x = pj' b in if x > 1e-7 then -x * log x else 0
-
+{-# INLINEABLE entropyForInputValueM #-}
 
