@@ -69,10 +69,21 @@ cost pss st = sumsum $ (zipWith.zipWith) c pss (qdist' (stSolution st))
 
 -- massiv versions
 
-gradientsM ::
-  (MA.Construct MA.M MA.Ix1 (MA.Vector MA.M Probability))
-  => MA.Matrix MA.U Probability -> TSNEStateM -> MA.Vector MA.D (MA.Vector MA.D Gradient) --m (MA.Matrix MA.D Gradient)
-gradientsM pss st = MA.map gradient ssV
+stepTSNE_M :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability -> TSNEStateM -> m TSNEStateM
+stepTSNE_M opts vs ps st = do
+  let i = stIterationM st
+      s = stSolutionM st
+      g = stGainsM st
+      d = stDeltasM st
+  gr <- gradientsM ps st
+  let i' = i + 1
+      g' = MA.computeAs MA.U $ MA.zipWith3 newGain g d gr
+      d' = MA.computeAs MA.U $ MA.zipWith3 (newDelta (tsneLearningRate opts) i) g' d gr
+  s' <- MA.computeAs MA.U <$> (recenterM $ MA.zipWith (+) s d')
+  return $ TSNEStateM i' s' g' d'
+
+gradientsM :: MA.MonadThrow m => MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)
+gradientsM pss st = fromOuterSlices $ MA.map gradient ssV
     where
         pssV :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM pss
         gradient :: MA.Vector MA.M Double -> MA.Vector MA.D Gradient

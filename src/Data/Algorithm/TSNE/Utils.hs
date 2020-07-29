@@ -71,7 +71,6 @@ symmetricalMatrixFromTopRight tr = zipWith (++) bl tr
 
 
 -- Massiv versions
-
 distanceSquaredM :: (MA.Source r MA.Ix1 Double
                     , MA.Source r' MA.Ix1 Double
                     )
