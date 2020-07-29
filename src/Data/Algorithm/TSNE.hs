@@ -5,7 +5,11 @@ module Data.Algorithm.TSNE (
         TSNEOutput3D(..),
         tsne2D,
         forTsne2D,
-        TSNEOutput2D(..)
+        TSNEOutput2D(..),
+        tsne3D_M,
+        forTsne3D_M,
+        tsne2D_M,
+        forTsne2D_M
     ) where
 
 import Pipes

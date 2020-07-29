@@ -63,6 +63,19 @@ executable haskell_tsne_example
   ghc-options:         -threaded
   default-language:    Haskell2010
 
+
+executable haskell_tsne_massiv_example
+  hs-source-dirs:      example
+  main-is:             MainM.hs
+  build-depends:       base,
+                       data-default,
+                       massiv,
+                       pipes,
+                       tsne
+  ghc-options:         -threaded
+  default-language:    Haskell2010
+  
+  
 executable haskell_tsne_timing
   hs-source-dirs:      timing
   main-is:             Main.hs
@@ -73,6 +86,18 @@ executable haskell_tsne_timing
                        tsne
   ghc-options:         -threaded
   default-language:    Haskell2010
+
+executable haskell_tsne_massiv_timing
+  hs-source-dirs:      timing
+  main-is:             MainM.hs
+  build-depends:       base,
+                       data-default,
+                       massiv,
+                       pipes,
+                       time,
+                       tsne
+  ghc-options:         -threaded
+  default-language:    Haskell2010  
 
 source-repository head
   type:     mercurial
