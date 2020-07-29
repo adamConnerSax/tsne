@@ -72,7 +72,7 @@ inputIsValidM i = if (MA.isEmpty i) then Left "empty input data" else Right ()
 -- stSolution is transposed for some reason.  I think?
 isValidStateForInputM :: Int -> TSNEInputM -> TSNEStateM -> Either String ()
 isValidStateForInputM d i st
-  | not (has2DShapeM (n, d) s) = Left $ "solution is wrong shape: " ++ show (shape2D_M s)
+  | not (has2DShapeM (n, d) s) = Left $ "solution is wrong shape: should be (" ++ show n ++ "," ++ show d ++ "), but is " ++ show (shape2D_M s)
   | otherwise = Right ()
   where
     n = inputSizeM i

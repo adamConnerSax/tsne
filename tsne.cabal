@@ -47,6 +47,7 @@ test-suite tSNE-test
   build-depends:       base,
                        hspec,
                        data-default,
+                       massiv,
                        tsne
   ghc-options:         -threaded 
                        -rtsopts 

@@ -27,3 +27,8 @@ spec = do
         it "works" $ do 
             s <- initState3D n
             stepTSNE def testInput testNeighbourProbs s `shouldSatisfy` isRight . (isValidStateForInput 3 testInput)
+
+    describe "stepTSNE_M" $ do
+        it "works" $ do 
+            s <- initState3D_M Nothing n
+            ((isValidStateForInputM 3 testInputM) <$> stepTSNE_M def testInputM testNeighbourProbsM s) >>=  (`shouldBe` Right ())

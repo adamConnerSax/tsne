@@ -2,6 +2,7 @@ module Data.Algorithm.TSNE.ChecksSpec (main, spec) where
 
 import Test.Hspec
 import Data.Algorithm.TSNE.Checks
+import qualified Data.Massiv.Array as MA
 
 -- `main` is here so that this module can be run from GHCi on its own.  It is
 -- not needed for automatic spec discovery.
@@ -53,3 +54,45 @@ spec = do
             has2DShape (2,1) [[u],[u]] `shouldBe` False
         it "2x1 is not 1x2" $ do
             has2DShape (1,2) [[u,u]] `shouldBe` False
+
+    describe "isSquareM" $ do
+        it "empty is 0x0 square" $ do
+            isSquareM 0 (MA.replicate MA.Seq (MA.Sz2 0 0) u)  `shouldBe` True
+        it "empty is not 1x1 square" $ do
+            isSquareM 1 (MA.replicate MA.Seq (MA.Sz2 0 0) u) `shouldBe` False
+        it "single is 1x1 square" $ do
+            isSquareM 1 (MA.replicate MA.Seq (MA.Sz2 1 1) u) `shouldBe` True
+        it "single is not 0x0 square" $ do
+            isSquareM 0 (MA.replicate MA.Seq (MA.Sz2 1 1) u) `shouldBe` False
+        it "2x2 square" $ do
+            isSquareM 2 (MA.replicate MA.Seq (MA.Sz2 2 2) u) `shouldBe` True
+        it "2x2 is not 0x0" $ do
+            isSquareM 0 (MA.replicate MA.Seq (MA.Sz2 2 2) u) `shouldBe` False
+        it "2x2 is not 0x0" $ do
+            isSquareM 1 (MA.replicate MA.Seq (MA.Sz2 2 2) u) `shouldBe` False
+        it "2x2 is not 3x3" $ do
+            isSquareM 3 (MA.replicate MA.Seq (MA.Sz2 2 2) u) `shouldBe` False
+        it "2x1 is not 1x1" $ do
+            isSquareM 1 (MA.replicate MA.Seq (MA.Sz2 1 2) u) `shouldBe` False
+        it "2x1 is not 2x2" $ do
+            isSquareM 2 (MA.replicate MA.Seq (MA.Sz2 1 2) u) `shouldBe` False
+        it "1x2 is not 1x1" $ do
+            isSquareM 1 (MA.replicate MA.Seq (MA.Sz2 1 2) u) `shouldBe` False
+        it "1x2 is not 2x2" $ do
+            isSquareM 2 (MA.replicate MA.Seq (MA.Sz2 1 2) u) `shouldBe` False
+
+    describe "has2DShapeM" $ do
+        it "empty is 0x0" $ do
+            has2DShapeM (0,0) (MA.replicate MA.Seq (MA.Sz2 0 0) u) `shouldBe` True
+        --it "empty is not 1x0" $ do
+        --    has2DShapeM (1,0) [] `shouldBe` False
+        it "empty is not 0x1" $ do
+            has2DShapeM (0,1) (MA.replicate MA.Seq (MA.Sz2 0 0) u) `shouldBe` False
+        it "1x2 is 1x2" $ do
+            has2DShapeM (1,2) (MA.replicate MA.Seq (MA.Sz2 2 1) u) `shouldBe` True
+        it "2x1 is 2x1" $ do
+            has2DShapeM (2,1) (MA.replicate MA.Seq (MA.Sz2 1 2) u) `shouldBe` True
+        it "1x2 is not 2x1" $ do
+            has2DShapeM (2,1) (MA.replicate MA.Seq (MA.Sz2 2 1) u) `shouldBe` False
+        it "2x1 is not 1x2" $ do
+            has2DShapeM (1,2) (MA.replicate MA.Seq (MA.Sz2 1 2) u) `shouldBe` False

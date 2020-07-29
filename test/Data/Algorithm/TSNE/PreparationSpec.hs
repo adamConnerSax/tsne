@@ -37,3 +37,18 @@ spec = do
             testNeighbourProbs `shouldSatisfy` has2DShape (n,n)
 
 
+    describe "testInputM" $ do
+        it "is right shape" $ do
+            has2DShapeM (64, 20) testInputM `shouldBe` True
+        it "is valid" $ do
+            inputIsValidM testInputM `shouldBe` Right ()
+        it "has right size" $ do
+            inputSizeM testInputM `shouldBe` 20
+        it "has right value size" $ do
+            inputValueSizeM testInputM `shouldBe` 64
+
+    describe "neighbourProbabilitiesM" $ do
+        it "is right shape" $ do
+            has2DShapeM (n, n) testNeighbourProbsM `shouldBe` True
+
+

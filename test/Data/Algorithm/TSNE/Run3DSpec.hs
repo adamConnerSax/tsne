@@ -45,3 +45,25 @@ spec = do
         it "is right shape" $ do
             s <- initState3D n
             gradients testNeighbourProbs s `shouldSatisfy` has2DShape (n,3)
+
+
+    describe "initSolution3D_M" $ do
+        it "is right shape" $
+            (has2DShapeM (n, 3) <$> initSolution3D_M Nothing n) >>= (`shouldBe` True)
+
+    describe "qdistM" $ do
+        it "is right shape" $ do
+            s <- initSolution3D_M Nothing n
+            has2DShapeM (n,n) (qdistM s) `shouldBe` True
+
+    describe "qdist'" $ do
+        it "is right shape" $ do
+            s <- initSolution3D_M Nothing n
+            has2DShapeM (n, n) (qdistM' s) `shouldBe` True
+
+    describe "gradients" $ do
+        it "is right shape" $ do
+            s <- initState3D_M Nothing n
+            (has2DShapeM (n, 3) <$> gradientsM testNeighbourProbsM s) >>= (`shouldBe` True)
+
+            

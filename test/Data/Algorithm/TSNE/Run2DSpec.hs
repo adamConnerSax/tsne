@@ -30,3 +30,12 @@ spec = do
     describe "initState" $ do
         it "is valid state" $
             initState2D n >>= (`shouldSatisfy` isRight . (isValidStateForInput 2 testInput))
+
+    describe "initSolution2D_M" $ do
+        it "is right shape" $
+            (has2DShapeM (n, 2) <$> initSolution2D_M Nothing n) >>= (`shouldBe` True)
+
+    describe "initState" $ do
+        it "is valid state" $
+            (isValidStateForInputM 2 testInputM <$> initState2D_M Nothing n) >>= (`shouldBe` Right ())
+

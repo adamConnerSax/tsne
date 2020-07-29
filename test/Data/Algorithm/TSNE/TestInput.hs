@@ -5,6 +5,8 @@ import Data.Default (def)
 import Data.Algorithm.TSNE.Types
 import Data.Algorithm.TSNE.Preparation
 
+import qualified Data.Massiv.Array as MA
+
 -- first 20 digits from the Python sklearn digits dataset
 testInput :: TSNEInput
 testInput = [
@@ -33,3 +35,8 @@ testInput = [
 testNeighbourProbs :: [[Probability]]
 testNeighbourProbs = neighbourProbabilities def testInput
 
+testInputM :: TSNEInputM
+testInputM = MA.fromLists' MA.Seq testInput
+
+testNeighbourProbsM :: MA.Matrix MA.U Probability
+testNeighbourProbsM = neighbourProbabilitiesM def testInputM
