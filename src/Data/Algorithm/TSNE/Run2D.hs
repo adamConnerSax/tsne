@@ -45,14 +45,19 @@ output2D pss st = TSNEOutput2D i s c
 
 -- massiv versions
 
-initState2D_M :: Int -> Maybe Int -> IO TSNEStateM
-initState2D_M n seedM = do
-    s <- initSolution2D_M n seedM
-    return $ TSNEStateM 0 s (MA.compute $ MA.replicate MA.Seq (MA.Sz2 n 2) 1) (MA.compute $ MA.replicate MA.Seq (MA.Sz2 n 2) 0)
+initState2D_M :: Maybe Int -> Int -> IO TSNEStateM
+initState2D_M seedM n = do
+    s <- initSolution2D_M seedM n
+    return
+      $ TSNEStateM
+      0
+      s
+      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 n 2) 1)
+      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 n 2) 0)
 
 -- we add the ability to specify the seed here so we can get deterministic output
-initSolution2D_M :: Int -> Maybe Int -> IO (MA.Matrix MA.U Double)
-initSolution2D_M n seedM = do
+initSolution2D_M :: Maybe Int -> Int -> IO (MA.Matrix MA.U Double)
+initSolution2D_M seedM n = do
   g <- case seedM of
     Nothing -> Random.getStdGen
     Just s -> return $ Random.mkStdGen s
