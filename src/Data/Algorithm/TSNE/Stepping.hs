@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 module Data.Algorithm.TSNE.Stepping where
 
@@ -68,23 +69,20 @@ cost pss st = sumsum $ (zipWith.zipWith) c pss (qdist' (stSolution st))
 
 -- massiv versions
 
-gradientsM :: MA.Matrix MA.U Probability -> TSNEStateM -> MA.Vector MA.D (MA.Vector MA.D Gradient) --m (MA.Matrix MA.D Gradient)
-gradientsM pss st = MA.map gradient (asVectorsM ss)
+gradientsM ::
+  (MA.Construct MA.M MA.Ix1 (MA.Vector MA.M Probability))
+  => MA.Matrix MA.U Probability -> TSNEStateM -> MA.Vector MA.D (MA.Vector MA.D Gradient) --m (MA.Matrix MA.D Gradient)
+gradientsM pss st = MA.map gradient ssV
     where
+        pssV :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM pss
         gradient :: MA.Vector MA.M Double -> MA.Vector MA.D Gradient
-        gradient s = zipWith4M (f s) s (asVectorsM pss) (asVectorsM qss) (asVectorsM qss')
-        ss = stSolutionM st -- MA.Matrix MA.U Double
+        gradient s = zipWith4M (f s) s pssV qssV qssV'
+        ss = stSolutionM st
+        ssV :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM ss
         MA.Sz2 _ cols = MA.size ss
         i = stIterationM st -- Int
-        qss = qdistM ss -- MA.Matrix MA.D Double 
-        qss' = qdistM' ss -- MA.Matrix MA.D Double 
-{-        f :: (MA.Source r MA.Ix1 Double)
-          => MA.Vector r Double
-          -> Double
-          -> MA.Vector r Double
-          -> MA.Vector r Double
-          -> MA.Vector r Double
-          -> Gradient -}
+        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ qdistM ss -- MA.Matrix MA.D Double 
+        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ MA.computeAs MA.U $ qdistM' ss -- MA.Matrix MA.D Double 
         f s x ps qs qs' = MA.sum $ zipWith4M g s ps qs qs'
             where
                 g y p q q' = m * (x - y)

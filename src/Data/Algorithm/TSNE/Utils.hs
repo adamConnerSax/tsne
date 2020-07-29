@@ -108,12 +108,7 @@ recenterM m = m MA..-. meansM
 -- compute upper triangle and then we symmetrize
 -- (i, j) element is distance between ith and jth row
 -- TODO: try making upper triangle computation parallel
-qdistM ::
-  forall r.(MA.Source (MA.R r) MA.Ix1 Double
-          , MA.OuterSlice r MA.Ix2 Double
-          , MA.Mutable r MA.Ix2 Double
-          )
-  => MA.Matrix r Double -> MA.Matrix r Double
+qdistM :: MA.Matrix MA.U Double -> MA.Matrix MA.U Double
 qdistM ss =
   let ssTr = MA.transpose ss
       MA.Sz2 r c = MA.size ssTr
@@ -122,7 +117,7 @@ qdistM ss =
         let (i MA.:. j) = ix 
             s = MA.sum $ MA.zipWith eDist (ssTr MA.!> i) (ssTr MA.!> j)
         in 1 / (1 + s)
-      upperTri = MA.compute @r $ MA.upperTriangular MA.Seq (MA.Sz1 r) dist
+      upperTri = MA.computeAs MA.U $ MA.upperTriangular MA.Seq (MA.Sz1 r) dist
   in MA.makeArray MA.Seq (MA.Sz2 r r) $ \(i MA.:. j) ->
     case compare i j of
       EQ -> 0
@@ -131,13 +126,9 @@ qdistM ss =
 {-# INLINEABLE qdistM #-}                
 
 
-qdistM' :: (MA.Source (MA.R r) MA.Ix1 Double
-          , MA.OuterSlice r MA.Ix2 Double
-          , MA.Mutable r MA.Ix2 Double
-          )
-        => MA.Matrix r Double -> MA.Matrix MA.D Double
+qdistM' :: MA.Matrix MA.U Double -> MA.Matrix MA.D Double
 qdistM' ss =
-  let qd = qdistM ss
+  let qd = qdistM  ss
       sumQD = MA.sum qd
       f q = max (q / sumQD) 1e-100        
   in MA.map f qd
@@ -158,11 +149,8 @@ zipWith4M :: (MA.Index ix
 zipWith4M f a1 a2 a3 a4 = MA.zipWith (\(e1, e2) (e3, e4) ->  f e1 e2 e3 e4) (MA.zip a1 a2) (MA.zip a3 a4)
 {-# INLINEABLE zipWith4M #-}
 
-asVectorsM :: forall e r.(MA.Load r MA.Ix2 e
-              , MA.Construct r MA.Ix1 (MA.Vector (MA.R r) e)
-              , MA.OuterSlice r MA.Ix2 e
-              )
-           => MA.Matrix r e -> MA.Vector r (MA.Vector (MA.R r) e)
+asVectorsM :: MA.OuterSlice r MA.Ix2 e
+           => MA.Matrix r e -> MA.Vector MA.D (MA.Vector (MA.R r) e)
 asVectorsM m =
   let MA.Sz2 r c = MA.size m
   in MA.makeArray MA.Seq (MA.Sz1 r) $ \r -> (m MA.!> r)
