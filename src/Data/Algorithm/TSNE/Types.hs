@@ -55,17 +55,17 @@ data TSNEState = TSNEState {
 --type Position2Dm = V.Vector U Double
 --type Position3Dm = V.Vector U Double
 
-type TSNEInputValueM =  MA.Vector MA.U Double 
-type TSNEInputM =  MA.Matrix MA.U Double 
+type TSNEInputValueM =  MA.Vector MA.U Double
+type TSNEInputM =  MA.Matrix MA.U Double
 
-{-
 data TSNEOutput3D_M = TSNEOutput3D_M {
     tsneIteration3D_M :: Int,
-    tsneSolution3_M :: [Position3D], -- Only if this is only for output.  Otherwise we need better.
+    tsneSolution3_M :: MA.Vector MA.U Position3D, -- Only if this is only for output.  Otherwise we need better.
     tsneCost3D_M :: Double
 } deriving (Show, Eq)
 
 
+{-
 data TSNEOutput2D_M = TSNEOutput2D_M {
     tsneIteration2D_M :: Int,
     tsneSolution2D_M :: [Position2D], -- Only if this is only for output.  Otherwise we need better.

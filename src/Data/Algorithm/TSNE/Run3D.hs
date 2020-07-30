@@ -70,19 +70,19 @@ runTSNE3D_M :: TSNEOptions
             -> TSNEInputM
             -> MA.Matrix MA.U Probability
             -> TSNEStateM
-            -> Producer TSNEOutput3D IO ()
+            -> Producer TSNEOutput3D_M IO ()
 runTSNE3D_M opts vs ps st = do
     yield $ output3D_M ps st
     st' <- force <$> stepTSNE_M opts vs ps st
     runTSNE3D_M opts vs ps st'
 {-# INLINEABLE runTSNE3D_M #-}
 
-solution3D_M :: MA.Matrix MA.U Double -> [Position3D]
-solution3D_M = solution3D . MA.toLists2
+solution3D_M :: MA.Matrix MA.U Double -> MA.Vector MA.U Position3D
+solution3D_M ma = MA.computeAs MA.U $ MA.zip3 (ma MA.!> 0) (ma MA.!> 1) (ma MA.!> 3)
 {-# INLINEABLE solution3D_M #-}
 
-output3D_M :: MA.Matrix MA.U Double -> TSNEStateM -> TSNEOutput3D
-output3D_M pss st = TSNEOutput3D i s c
+output3D_M :: MA.Matrix MA.U Double -> TSNEStateM -> TSNEOutput3D_M
+output3D_M pss st = TSNEOutput3D_M i s c
     where
         i = stIterationM st
         s = (solution3D_M . stSolutionM) st

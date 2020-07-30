@@ -40,21 +40,20 @@ main = do
 
     -- runEffect $ for ((tsne3D_M def Nothing $ inputMatrix) >-> Pipes.take iters) $ \r -> do
     --   lift $ outputResult t0 r
-    
+
 readDataFile :: FilePath -> IO [[Double]]
 readDataFile f = do
     d <- readFile f
     return $ map read (lines d)
 
-outputResult :: UTCTime -> TSNEOutput3D -> IO ()
+outputResult :: UTCTime -> TSNEOutput3D_M -> IO ()
 outputResult t0 s = do
-    let i = tsneIteration3D s
+    let i = tsneIteration3D_M s
 
-    when (i > 0 && (i == 1 || i `mod` 100 == 0)) $ do 
+    when (i > 0 && (i == 1 || i `mod` 100 == 0)) $ do
         putStrLn $ "iteration: " ++ show i
         t <- getCurrentTime
         let dt = diffUTCTime t t0
             ms = round $ 1000.0 * realToFrac dt / realToFrac i
         putStrLn $ "  elapsed time: " ++ show dt
         putStrLn $ "  average iteration time: " ++ show ms ++ "ms"
-
