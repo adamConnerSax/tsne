@@ -36,10 +36,10 @@ main = do
 
     t0 <- getCurrentTime
     inputMatrix <- MA.fromListsM MA.Seq $ take n' inputData
---    forTsne3D_M (outputResult t0) def Nothing $ inputMatrix
+    forTsne3D_M (outputResult t0) def Nothing inputMatrix
 
-    runEffect $ for ((tsne3D_M def Nothing $ inputMatrix) >-> Pipes.take iters) $ \r -> do
-      lift $ outputResult t0 r
+    -- runEffect $ for ((tsne3D_M def Nothing $ inputMatrix) >-> Pipes.take iters) $ \r -> do
+    --   lift $ outputResult t0 r
     
 readDataFile :: FilePath -> IO [[Double]]
 readDataFile f = do

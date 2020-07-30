@@ -74,8 +74,8 @@ data TSNEOutput2D_M = TSNEOutput2D_M {
 -}
 
 data TSNEStateM = TSNEStateM {
-    stIterationM :: Int,
-    stSolutionM :: MA.Matrix MA.U Double, -- dimension (solution) x length (inputs)
-    stGainsM :: MA.Matrix MA.U Gain, -- dimension (solution) x length (inputs)
-    stDeltasM :: MA.Matrix MA.U Delta -- dimension (solution) x length (inputs)
+    stIterationM :: !Int,
+    stSolutionM :: !(MA.Matrix MA.U Double), -- dimension (solution) x length (inputs)
+    stGainsM :: !(MA.Matrix MA.U Gain), -- dimension (solution) x length (inputs)
+    stDeltasM :: !(MA.Matrix MA.U Delta) -- dimension (solution) x length (inputs)
 } deriving (Show, Generic, NFData)

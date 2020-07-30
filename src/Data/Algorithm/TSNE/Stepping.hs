@@ -92,19 +92,20 @@ stepTSNE_M opts vs ps st =  do
 --  MA.liftIO $ putStrLn $ "size of s' = recentered s+d'=" ++ show (MA.size s')    
   return $ TSNEStateM i' s' g' d'
 
-gradientsM :: MA.MonadThrow m => MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)
-gradientsM pss st = fromOuterSlices $ MA.map gradient ssV
+gradientsM :: MA.MonadThrow m =>
+  MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)
+gradientsM pss st = pure $! asMatrixM $ MA.map gradient ssV
     where
         ss = stSolutionM st
         ssV :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM ss
         pssV  = asVectorsM pss
---        gradient :: MA.Vector MA.U Double -> MA.Vector MA.U Gradient
-        gradient s = zipWith4M (f s) s pssV qssV qssV'
         MA.Sz2 _ cols = MA.size ss
         i = stIterationM st -- Int
         qd = qdistM ss
-        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ qd -- MA.Matrix MA.D Double 
-        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ MA.computeAs MA.U $ qdistM'' qd -- MA.Matrix MA.D Double
+        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM qd
+        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ MA.computeAs MA.U $ qdistM'' qd
+        gradient :: MA.Vector MA.M Double -> MA.Vector MA.D Gradient
+        gradient s = zipWith4M (f s) s pssV qssV qssV'
         f :: MA.Vector MA.M Double -> Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> Double
         f s x ps qs qs' = MA.sum $ zipWith4M g s ps qs qs'
             where
