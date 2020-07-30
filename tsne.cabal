@@ -15,13 +15,13 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Data.Algorithm.TSNE,
-                       Data.Algorithm.TSNE.Types, 
+                       Data.Algorithm.TSNE.Types,
                        Data.Algorithm.TSNE.Utils,
-                       Data.Algorithm.TSNE.Checks, 
-                       Data.Algorithm.TSNE.Preparation, 
-                       Data.Algorithm.TSNE.Stepping, 
-                       Data.Algorithm.TSNE.Run2D, 
-                       Data.Algorithm.TSNE.Run3D 
+                       Data.Algorithm.TSNE.Checks,
+                       Data.Algorithm.TSNE.Preparation,
+                       Data.Algorithm.TSNE.Stepping,
+                       Data.Algorithm.TSNE.Run2D,
+                       Data.Algorithm.TSNE.Run3D
   build-depends:       base >= 4.7 && < 5,
                        data-default,
                        deepseq,
@@ -77,8 +77,8 @@ executable haskell_tsne_massiv_example
   ghc-options:         -threaded -O2
 -- -with-rtsopts=-N
   default-language:    Haskell2010
-  
-  
+
+
 executable haskell_tsne_timing
   hs-source-dirs:      timing
   main-is:             Main.hs
@@ -87,7 +87,8 @@ executable haskell_tsne_timing
                        pipes,
                        time,
                        tsne
-  ghc-options:         -threaded -O2 -with-rtsopts=-N
+  ghc-options:         -threaded -O2
+ -- -with-rtsopts=-N
   default-language:    Haskell2010
 
 executable haskell_tsne_massiv_timing
@@ -99,8 +100,9 @@ executable haskell_tsne_massiv_timing
                        pipes,
                        time,
                        tsne
-  ghc-options:         -threaded -O2 -with-rtsopts=-N
-  default-language:    Haskell2010  
+  ghc-options:         -threaded -O2
+   ---with-rtsopts=-N
+  default-language:    Haskell2010
 
 source-repository head
   type:     mercurial
