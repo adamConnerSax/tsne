@@ -105,9 +105,8 @@ qdistM :: MA.Matrix MA.U Double -> MA.Matrix MA.U Double
 qdistM ss =
   let ssTr = MA.transpose ss -- now is
       MA.Sz2 r c = MA.size ssTr
-      eDist a b = (a - b)^^2
       dist (i MA.:. j) =
-        let s = MA.sum $ MA.zipWith eDist (ssTr MA.!> i) (ssTr MA.!> j)
+        let s = distanceSquaredM (ssTr MA.!> i) (ssTr MA.!> j)
         in 1 / (1 + s)
   in MA.computeAs MA.U $ symmetric (MA.Sz1 r) dist
 {-# INLINEABLE qdistM #-}
