@@ -76,7 +76,7 @@ distanceSquaredM :: (MA.Source r MA.Ix1 Double
                     )
 
                  => MA.Vector r Double -> MA.Vector r' Double -> Double
-distanceSquaredM as bs = MA.sum $ MA.zipWith (\a b -> let x =  (a - b) in x * x) as bs
+distanceSquaredM as bs = MA.sum $ MA.zipWith (\a b -> let x = a - b in x * x) as bs
 {-# INLINEABLE distanceSquaredM #-}
 
 symmetrizeSqM :: (MA.Numeric r Double
@@ -135,27 +135,27 @@ qdistM'' qd =
   in MA.map f qd
 {-# INLINEABLE qdistM'' #-}
 
-zipWith4M :: (MA.Index ix
-             , MA.Source r1 ix e1
-             , MA.Source r2 ix e2
-             , MA.Source r3 ix e3
-             , MA.Source r4 ix e4
-             )
-          => (e1 -> e2 -> e3 -> e4 -> e)
-         -> MA.Array r1 ix e1
-         -> MA.Array r2 ix e2
-         -> MA.Array r3 ix e3
-         -> MA.Array r4 ix e4
-         -> MA.Array MA.D ix e
-zipWith4M f a1 a2 a3 a4 = MA.zipWith (\(e1, e2) (e3, e4) ->  f e1 e2 e3 e4) (MA.zip a1 a2) (MA.zip a3 a4)
-{-# INLINEABLE zipWith4M #-}
+-- zipWith4M :: (MA.Index ix
+--              , MA.Source r1 ix e1
+--              , MA.Source r2 ix e2
+--              , MA.Source r3 ix e3
+--              , MA.Source r4 ix e4
+--              )
+--           => (e1 -> e2 -> e3 -> e4 -> e)
+--          -> MA.Array r1 ix e1
+--          -> MA.Array r2 ix e2
+--          -> MA.Array r3 ix e3
+--          -> MA.Array r4 ix e4
+--          -> MA.Array MA.D ix e
+-- zipWith4M f a1 a2 a3 a4 = MA.zipWith (\(e1, e2) (e3, e4) ->  f e1 e2 e3 e4) (MA.zip a1 a2) (MA.zip a3 a4)
+-- {-# INLINEABLE zipWith4M #-}
 
-asVectorsM :: MA.OuterSlice r MA.Ix2 e
-           => MA.Matrix r e -> MA.Vector MA.D (MA.Vector (MA.R r) e)
-asVectorsM m =
-  let MA.Sz2 r c = MA.size m
-  in MA.makeArray MA.Seq (MA.Sz1 r) $ \r -> (m MA.!> r)
-{-# INLINEABLE asVectorsM #-}
+-- asVectorsM :: MA.OuterSlice r MA.Ix2 e
+--            => MA.Matrix r e -> MA.Vector MA.D (MA.Vector (MA.R r) e)
+-- asVectorsM m =
+--   let MA.Sz2 r c = MA.size m
+--   in MA.makeArray MA.Seq (MA.Sz1 r) $ \r -> (m MA.!> r)
+-- {-# INLINEABLE asVectorsM #-}
 
 -- The issue here is that the vectors might not all be the same size.  So we give a size and raise and exception (??)
 -- if we're wrong
