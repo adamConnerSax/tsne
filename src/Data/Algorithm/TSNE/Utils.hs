@@ -75,33 +75,28 @@ distanceSquaredM :: (MA.Source r MA.Ix1 Double
                     , MA.Source r' MA.Ix1 Double
                     )
 
-                 => MA.Numeric r Double => MA.Vector r Double -> MA.Vector r' Double -> Double
-distanceSquaredM as bs = let v = MA.zipWith (-) as bs in MA.sum $ MA.zipWith (*) v v 
+                 => MA.Vector r Double -> MA.Vector r' Double -> Double
+distanceSquaredM as bs = MA.sum $ MA.zipWith (\a b -> let x =  (a - b) in x * x) as bs
 {-# INLINEABLE distanceSquaredM #-}
 
--- this is now delayed.
 symmetrizeSqM :: (MA.Numeric r Double
                  , MA.Source r MA.Ix2 Double)
-              => MA.Matrix r Double -> MA.Matrix MA.D Double
-symmetrizeSqM m = MA.zipWith f m (MA.transpose m) where
+              => MA.Matrix r Double -> MA.Matrix MA.U Double
+symmetrizeSqM m = MA.computeAs MA.U $ MA.zipWith f m (MA.transpose m) where
   MA.Sz2 r _ = MA.size m 
   f :: Double -> Double -> Double
   f x y = max a 1e-100
     where a = (x + y) / (2 * realToFrac r) 
 {-# INLINEABLE symmetrizeSqM #-}
 
-recenterM :: (MA.Source r MA.Ix2 Double
-             , MA.Construct r MA.Ix2 Double
-             , MA.Numeric r Double -- this required r be Delayed
-             , MA.MonadThrow m
-              )
-          => MA.Matrix r Double -> m (MA.Matrix r Double)
-recenterM m = m MA..-. meansM 
+recenterM :: MA.Source r MA.Ix2 Double => MA.Matrix r Double -> MA.Matrix MA.D Double
+recenterM m = MA.zipWith (-) m meansM 
     where
-        meansM = MA.makeArray MA.Seq (MA.Sz2 r c) (\ix -> let (r MA.:. c) = ix in meansV MA.! r)
-        meansV :: MA.Vector MA.U Double
-        meansV = MA.compute $ fmap (/realToFrac c) $ MA.foldlInner (+) 0 m
-        MA.Sz2 r c = MA.size m
+--      meansM = MA.makeArray MA.Seq (MA.Sz2 r c) (\ix -> let (r MA.:. c) = ix in meansV MA.! r)
+--      meansV :: MA.Vector MA.U Double
+      meansM = MA.expandInner (MA.Sz1 c) (\a _ -> a) meansV
+      meansV = MA.computeAs MA.U $ MA.map (/realToFrac c) $ MA.foldlInner (+) 0 m -- fold over columns
+      MA.Sz2 r c = MA.size m
 {-# INLINEABLE recenterM #-}
 
 -- compute upper triangle and then we symmetrize
@@ -109,7 +104,7 @@ recenterM m = m MA..-. meansM
 -- TODO: try making upper triangle computation parallel
 qdistM :: MA.Matrix MA.U Double -> MA.Matrix MA.U Double
 qdistM ss =
-  let ssTr = MA.transpose ss
+  let ssTr = MA.transpose ss -- now is 
       MA.Sz2 r c = MA.size ssTr
       eDist a b = (a - b)^^2
       dist ix =
