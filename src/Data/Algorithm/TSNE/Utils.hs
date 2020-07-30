@@ -153,6 +153,7 @@ asVectorsM :: MA.OuterSlice r MA.Ix2 e
 asVectorsM m =
   let MA.Sz2 r c = MA.size m
   in MA.makeArray MA.Seq (MA.Sz1 r) $ \r -> (m MA.!> r)
+{-# INLINEABLE asVectorsM #-}
 
 -- The issue here is that the vectors might not all be the same size.  So we give a size and raise and exception (??)
 -- if we're wrong
@@ -162,7 +163,7 @@ asMatrixM ::
    , MA.OuterSlice r' MA.Ix1 e
    ) => Int -> MA.Vector r (MA.Vector r' e) -> MA.Matrix MA.D e 
 asMatrixM cols vs = MA.expandWithin MA.Dim1 (MA.Sz1 cols) (\v j -> v MA.!> j) vs
-
+{-# INLINEABLE asMatrixM #-}
 
 fromOuterSlices ::
      forall r r' ix e f m.
@@ -181,3 +182,4 @@ fromOuterSlices arrsF =
     Just (a, _) -> do
       arr <- MA.concatM (MA.dimensions (Proxy :: Proxy (MA.Lower ix))) arrsF
       MA.resizeM (MA.consSz (MA.SafeSz (F.length arrsF)) (MA.size a)) $ MA.compute arr
+{-# INLINEABLE fromOuterSlices #-}

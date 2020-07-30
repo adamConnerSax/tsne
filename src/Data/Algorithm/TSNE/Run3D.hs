@@ -49,7 +49,13 @@ output3D pss st = TSNEOutput3D i s c
 initState3D_M :: Maybe Int -> Int -> IO TSNEStateM
 initState3D_M seedM n = do
     s <- initSolution3D_M seedM n
-    return $ TSNEStateM 0 s (MA.compute $ MA.replicate MA.Seq (MA.Sz2 n 3) 1) (MA.compute $ MA.replicate MA.Seq (MA.Sz2 n 3) 0)
+    return
+      $ TSNEStateM
+      0
+      s
+      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 3 n) 1)
+      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 3 n) 0)
+{-# INLINEABLE initState3D_M #-}
 
 -- we add the ability to specify the seed here so we can get deterministic output
 initSolution3D_M :: Maybe Int -> Int -> IO (MA.Matrix MA.U Double)
@@ -58,6 +64,7 @@ initSolution3D_M seedM n = do
     Nothing -> Random.getStdGen
     Just s -> return $ Random.mkStdGen s
   return $ snd $ MA.randomArrayS g (MA.Sz2 3 n) (normal' (0, 1e-4))
+{-# INLINEABLE initSolution3D_M #-}
 
 runTSNE3D_M :: TSNEOptions
             -> TSNEInputM
@@ -68,9 +75,11 @@ runTSNE3D_M opts vs ps st = do
     yield $ output3D_M ps st
     st' <- force <$> stepTSNE_M opts vs ps st
     runTSNE3D_M opts vs ps st'
+{-# INLINEABLE runTSNE3D_M #-}
 
 solution3D_M :: MA.Matrix MA.U Double -> [Position3D]
 solution3D_M = solution3D . MA.toLists2
+{-# INLINEABLE solution3D_M #-}
 
 output3D_M :: MA.Matrix MA.U Double -> TSNEStateM -> TSNEOutput3D
 output3D_M pss st = TSNEOutput3D i s c
@@ -78,3 +87,4 @@ output3D_M pss st = TSNEOutput3D i s c
         i = stIterationM st
         s = (solution3D_M . stSolutionM) st
         c = costM pss st
+{-# INLINEABLE output3D_M #-}

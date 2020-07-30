@@ -69,17 +69,27 @@ cost pss st = sumsum $ (zipWith.zipWith) c pss (qdist' (stSolution st))
 
 -- massiv versions
 
-stepTSNE_M :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability -> TSNEStateM -> m TSNEStateM
+stepTSNE_M :: ({-MA.MonadIO m,-} MA.MonadThrow m) => TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability -> TSNEStateM -> m TSNEStateM
 stepTSNE_M opts vs ps st = do
   let i = stIterationM st
       s = stSolutionM st
       g = stGainsM st
       d = stDeltasM st
+{-
+  MA.liftIO $ putStrLn $ "size of input=" ++ show (MA.size ps)
+  MA.liftIO $ putStrLn $ "size of current solution=" ++ show (MA.size s)
+  MA.liftIO $ putStrLn $ "size of gains=" ++ show (MA.size g)
+  MA.liftIO $ putStrLn $ "size of delta=" ++ show (MA.size d)
+-}
   gr <- gradientsM ps st
+--  MA.liftIO $ putStrLn $ "size of gradient=" ++ show (MA.size gr)    
   let i' = i + 1
       g' = MA.computeAs MA.U $ MA.zipWith3 newGain g d gr
       d' = MA.computeAs MA.U $ MA.zipWith3 (newDelta (tsneLearningRate opts) i) g' d gr
+--  MA.liftIO $ putStrLn $ "size of g'=" ++ show (MA.size g')
+--  MA.liftIO $ putStrLn $ "size of d'=" ++ show (MA.size d')    
   s' <- MA.computeAs MA.U <$> (recenterM $ MA.zipWith (+) s d')
+--  MA.liftIO $ putStrLn $ "size of s' = recentered s+d'=" ++ show (MA.size s')    
   return $ TSNEStateM i' s' g' d'
 
 gradientsM :: MA.MonadThrow m => MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)

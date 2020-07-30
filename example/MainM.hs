@@ -7,6 +7,7 @@ import Data.Default(def)
 import Pipes
 import Data.Algorithm.TSNE
 
+import qualified Pipes.Prelude as Pipes
 import qualified Data.Massiv.Array as MA
 
 main :: IO ()
@@ -15,7 +16,7 @@ main = do
 
     args <- getArgs
     let argc = length args
-    when (argc < 1 || argc > 2) $ do
+    when (argc < 1 || argc > 3) $ do
         putStrLn "Usage haskell_tsne_example {input file name} [{num input values}]"
         exitFailure
 
@@ -26,14 +27,16 @@ main = do
     putStrLn $ "total input: " ++ show n
 
     let n' = if (argc < 2) then n else (read (args !! 1)) 
+    putStrLn $ "using: " ++ show n' ++ " points from input"
 
-    putStrLn $ "using: " ++ show n'
+    let iters = if (argc < 3) then 1000 else (read (args !! 2))
+    putStrLn $ "running " ++ show iters ++ " iterations."
 
     inputMatrix <- MA.fromListsM MA.Seq $ take n' inputData
-    forTsne3D_M outputResult def Nothing inputMatrix
+--    forTsne3D_M outputResult def Nothing inputMatrix
     
-    --runEffect $ for (tsne3D def $ take n' inputData) $ \r -> do
-    --    lift $ outputResult r
+    runEffect $ for ((tsne3D_M def Nothing $ inputMatrix) >-> Pipes.take iters) $ \r -> do
+        lift $ outputResult r
 
 readDataFile :: FilePath -> IO [[Double]]
 readDataFile f = do
