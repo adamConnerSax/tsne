@@ -71,10 +71,12 @@ runTSNE3D_M :: TSNEOptions
             -> MA.Matrix MA.U Probability
             -> TSNEStateM
             -> Producer TSNEOutput3D_M IO ()
-runTSNE3D_M opts vs ps st = do
-    yield $ output3D_M ps st
-    st' <- force <$> stepTSNE_M opts vs ps st
-    runTSNE3D_M opts vs ps st'
+runTSNE3D_M opts vs ps = go
+    where
+        go st = do
+            yield $ output3D_M ps st
+            st' <- force <$> stepTSNE_M opts vs ps st
+            go st'
 {-# INLINEABLE runTSNE3D_M #-}
 
 solution3D_M :: MA.Matrix MA.U Double -> MA.Vector MA.U Position3D

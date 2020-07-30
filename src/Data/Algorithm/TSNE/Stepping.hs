@@ -89,7 +89,7 @@ stepTSNE_M opts vs ps st =  do
       d' = MA.computeAs MA.U $ MA.zipWith3 (newDelta (tsneLearningRate opts) i) g' d gr
 --  MA.liftIO $ putStrLn $ "size of g'=" ++ show (MA.size g')
 --  MA.liftIO $ putStrLn $ "size of d'=" ++ show (MA.size d')
-      s' = MA.computeAs MA.U $ recenterM $ MA.zipWith (+) s d'
+      s' = MA.computeAs MA.U $ recenterM $ MA.computeAs MA.U $ MA.zipWith (+) s d'
 --  MA.liftIO $ putStrLn $ "size of s' = recentered s+d'=" ++ show (MA.size s')
   return $ TSNEStateM i' s' g' d'
 
