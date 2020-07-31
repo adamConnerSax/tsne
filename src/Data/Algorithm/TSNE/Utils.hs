@@ -94,6 +94,7 @@ recenterM m = MA.imap (\(i MA.:. _) e -> e - (meansV MA.! i)) m
     where
 --      meansM = MA.makeArray MA.Seq (MA.Sz2 r c) (\ix -> let (r MA.:. c) = ix in meansV MA.! r)
 --      meansV :: MA.Vector MA.U Double
+      --meansV = MA.computeAs MA.U $ MA.map (/ fromIntegral c) $ MA.foldlInner (+) 0 m -- fold over columns
       meansV = MA.computeAs MA.U $ MA.map (/ fromIntegral c) $ MA.foldlInner (+) 0 m -- fold over columns
       MA.Sz2 r c = MA.size m
 {-# INLINEABLE recenterM #-}
@@ -102,10 +103,9 @@ recenterM m = MA.imap (\(i MA.:. _) e -> e - (meansV MA.! i)) m
 -- (i, j) element is distance between ith and jth row
 qdistM :: MA.Matrix MA.U Double -> MA.Matrix MA.U Double
 qdistM ss =
-  let ssTr = MA.transpose ss -- now is
-      MA.Sz2 r c = MA.size ssTr
+  let MA.Sz2 c r = MA.size ss
       dist (i MA.:. j) =
-        let s = distanceSquaredM (ssTr MA.!> i) (ssTr MA.!> j)
+        let s = distanceSquaredM (ss MA.<! i) (ss MA.<! j)
         in 1 / (1 + s)
   in MA.computeAs MA.U $ symmetric (MA.Sz1 r) dist
 {-# INLINEABLE qdistM #-}
