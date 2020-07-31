@@ -102,8 +102,10 @@ gradientsM pss st = fromOuterSlices $ MA.map gradient ssV
         gradient s = zipWith4M (f s) s pssV qssV qssV'
         MA.Sz2 _ cols = MA.size ss
         i = stIterationM st -- Int
-        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ qdistM ss -- MA.Matrix MA.D Double 
-        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ MA.computeAs MA.U $ qdistM' ss -- MA.Matrix MA.D Double 
+        qd = qdistM ss
+        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ qd -- MA.Matrix MA.D Double 
+        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ MA.computeAs MA.U $ qdistM'' qd -- MA.Matrix MA.D Double
+        f :: MA.Vector MA.M Double -> Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> Double
         f s x ps qs qs' = MA.sum $ zipWith4M g s ps qs qs'
             where
                 g y p q q' = m * (x - y)

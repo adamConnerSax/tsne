@@ -89,7 +89,7 @@ rawNeighbourProbabilitiesM opts vs = MA.expandWithin @_ @_ @MA.N MA.Dim1 (MA.Sz1
             pj :: MA.Vector MA.M Double -> Double
             pj b
               | a == b = 0
-              | otherwise = exp $ -(distanceSquaredM (MA.delay a) (MA.delay b)) * beta
+              | otherwise = exp $ -(distanceSquaredM a b) * beta
             psum :: Double  
             psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
             pj' :: MA.Vector MA.M Double -> Double
@@ -124,7 +124,7 @@ entropyForInputValueM beta bs a = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoi
     pj :: MA.Vector MA.M Double -> Double
     pj b
       | (MA.toManifest a) == b = 0
-      | otherwise = exp $ -(distanceSquaredM (MA.delay a) (MA.delay b)) * beta
+      | otherwise = exp $ -(distanceSquaredM a b) * beta
     psum :: Double  
     psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
     pj' :: MA.Vector MA.M Double -> Double

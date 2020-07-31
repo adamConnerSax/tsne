@@ -6,7 +6,8 @@ import Control.Monad(when)
 import Data.Default(def)
 import Data.Time
 import Data.Algorithm.TSNE
-
+import Pipes
+import qualified Pipes.Prelude as Pipes
 
 
 main :: IO ()
@@ -15,7 +16,7 @@ main = do
 
     args <- getArgs
     let argc = length args
-    when (argc < 1 || argc > 2) $ do
+    when (argc < 1 || argc > 3) $ do
         putStrLn "Usage haskell_tsne_timing {input file name} [{num input values}]"
         exitFailure
 
@@ -26,11 +27,16 @@ main = do
     putStrLn $ "total input: " ++ show n
 
     let n' = if (argc < 2) then n else (read (args !! 1)) 
+    putStrLn $ "using: " ++ show n' ++ " points from input."
 
-    putStrLn $ "using: " ++ show n'
+    let iters = if (argc < 3) then 1000 else (read (args !! 2))
+    putStrLn $ "running " ++ show iters ++ " iterations."
 
     t0 <- getCurrentTime
-    forTsne3D (outputResult t0) def $ take n' inputData
+--    forTsne3D (outputResult t0) def $ take n' inputData
+
+    runEffect $ for ((tsne3D def $ take n' inputData) >-> Pipes.take iters) $ \r -> do
+      lift $ outputResult t0 r
     
 readDataFile :: FilePath -> IO [[Double]]
 readDataFile f = do

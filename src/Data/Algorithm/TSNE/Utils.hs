@@ -101,31 +101,34 @@ recenterM m = MA.zipWith (-) m meansM
 
 -- compute upper triangle and then we symmetrize
 -- (i, j) element is distance between ith and jth row
--- TODO: try making upper triangle computation parallel
 qdistM :: MA.Matrix MA.U Double -> MA.Matrix MA.U Double
 qdistM ss =
-  let ssTr = MA.transpose ss -- now is 
+  let ssTr = MA.transpose ss -- now is points x dimension 
       MA.Sz2 r c = MA.size ssTr
-      eDist a b = (a - b)^^2
+      eDist a b = let x = (a - b) in x * x
       dist ix =
         let (i MA.:. j) = ix 
             s = MA.sum $ MA.zipWith eDist (ssTr MA.!> i) (ssTr MA.!> j)
         in 1 / (1 + s)
-      upperTri = MA.computeAs MA.U $ MA.upperTriangular MA.Seq (MA.Sz1 r) dist
-  in MA.makeArray MA.Seq (MA.Sz2 r r) $ \(i MA.:. j) ->
+      {-# SCC dist #-}  
+      upperTri = MA.computeAs MA.U $ MA.upperTriangular MA.Par (MA.Sz1 r) dist
+      {-# SCC upperTri "blah" #-}
+  in MA.makeArray MA.Par (MA.Sz2 r r) $ \(i MA.:. j) ->
     case compare i j of
       EQ -> 0
       LT -> upperTri MA.! (i MA.:. j)
       GT -> upperTri MA.! (j MA.:. i)
 {-# INLINEABLE qdistM #-}                
 
-
-qdistM' :: MA.Matrix MA.U Double -> MA.Matrix MA.D Double
-qdistM' ss =
-  let qd = qdistM  ss
-      sumQD = MA.sum qd
+qdistM'' ::  MA.Matrix MA.U Double ->  MA.Matrix MA.D Double
+qdistM'' qd =
+  let sumQD = MA.sum qd
       f q = max (q / sumQD) 1e-100        
   in MA.map f qd
+{-# INLINE qdistM'' #-}
+
+qdistM' :: MA.Matrix MA.U Double -> MA.Matrix MA.D Double
+qdistM' ss = qdistM'' $ qdistM ss
 {-# INLINEABLE qdistM' #-}
 
 zipWith4M :: (MA.Index ix
