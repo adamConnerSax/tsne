@@ -95,7 +95,7 @@ stepTSNE_M opts vs ps st =  do
 
 gradientsM :: MA.MonadThrow m =>
   MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)
-gradientsM pss st = pure $! asMatrixM $ MA.map gradient ssV
+gradientsM pss st = MA.compute <$> MA.stackOuterSlicesM (MA.map gradient ssV)
     where
         ss = stSolutionM st
         ssV :: MA.Vector MA.D (MA.Vector MA.M Double) = MA.outerSlices ss
