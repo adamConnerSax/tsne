@@ -89,13 +89,12 @@ symmetrizeSqM m = MA.computeAs MA.U $ MA.zipWith f m (MA.transpose m) where
     where a = (x + y) / (2 * realToFrac r)
 {-# INLINEABLE symmetrizeSqM #-}
 
-recenterM :: MA.Source r MA.Ix2 Double => MA.Matrix r Double -> MA.Matrix MA.D Double
-recenterM m = MA.zipWith (-) m meansM
+recenterM :: MA.Manifest r MA.Ix2 Double => MA.Matrix r Double -> MA.Matrix MA.D Double
+recenterM m = MA.imap (\(i MA.:. _) e -> e - (meansV MA.! i)) m
     where
 --      meansM = MA.makeArray MA.Seq (MA.Sz2 r c) (\ix -> let (r MA.:. c) = ix in meansV MA.! r)
 --      meansV :: MA.Vector MA.U Double
-      meansM = MA.expandInner (MA.Sz1 c) (\a _ -> a) meansV
-      meansV = MA.computeAs MA.U $ MA.map (/realToFrac c) $ MA.foldlInner (+) 0 m -- fold over columns
+      meansV = MA.computeAs MA.U $ MA.map (/ fromIntegral c) $ MA.foldlInner (+) 0 m -- fold over columns
       MA.Sz2 r c = MA.size m
 {-# INLINEABLE recenterM #-}
 
