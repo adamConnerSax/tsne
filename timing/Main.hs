@@ -33,7 +33,7 @@ main = do
     putStrLn $ "running " ++ show iters ++ " iterations."
 
     t0 <- getCurrentTime
---    forTsne3D (outputResult t0) def $ take n' inputData
+    forTsne3D (outputResult t0) def $ take n' inputData
 
     runEffect $ for ((tsne3D def $ take n' inputData) >-> Pipes.take iters) $ \r -> do
       lift $ outputResult t0 r
