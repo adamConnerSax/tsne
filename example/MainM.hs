@@ -26,7 +26,7 @@ main = do
     let n = length inputData
     putStrLn $ "total input: " ++ show n
 
-    let n' = if (argc < 2) then n else (read (args !! 1)) 
+    let n' = if (argc < 2) then n else (read (args !! 1))
     putStrLn $ "using: " ++ show n' ++ " points from input"
 
     let iters = if (argc < 3) then 1000 else (read (args !! 2))
@@ -34,7 +34,7 @@ main = do
 
     inputMatrix <- MA.fromListsM MA.Seq $ take n' inputData
 --    forTsne3D_M outputResult def Nothing inputMatrix
-    
+
     runEffect $ for ((tsne3D_M def Nothing $ inputMatrix) >-> Pipes.take iters) $ \r -> do
         lift $ outputResult r
 
@@ -43,8 +43,7 @@ readDataFile f = do
     d <- readFile f
     return $ map read (lines d)
 
-outputResult :: TSNEOutput3D -> IO ()
+outputResult :: TSNEOutput3D_M -> IO ()
 outputResult s = do
-    putStrLn $ "iteration: " ++ (show.tsneIteration3D) s
-    putStrLn $ "cost: " ++ (show.tsneCost3D) s
-
+    putStrLn $ "iteration: " ++ (show.tsneIteration3D_M) s
+    putStrLn $ "cost: " ++ (show.tsneCost3D_M) s

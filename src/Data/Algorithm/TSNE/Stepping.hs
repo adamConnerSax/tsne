@@ -36,9 +36,9 @@ stepTSNE opts vs ps st = TSNEState i' s'' g' d'
 newGain :: Gain -> Delta -> Gradient -> Gain
 newGain g d gr = max 0.01 g'
     where
-        g' = if signum d == signum gr 
+        g' = if signum d == signum gr
                 then g * 0.8
-                else g + 0.2  
+                else g + 0.2
 
 newDelta :: Double -> Int -> Gain -> Delta -> Gradient -> Delta
 newDelta e i g' d gr = (m * d) - (e * g' * gr)
@@ -53,7 +53,7 @@ gradients pss st = gradient <$> ss
         ss = stSolution st
         i = stIteration st
         qss = qdist ss
-        qss' = qdist' ss 
+        qss' = qdist' ss
         f :: [Double] -> Double -> [Double] -> [Double] -> [Double] -> Gradient
         f s x ps qs qs' = sum $ zipWith4 g s ps qs qs'
             where
@@ -65,11 +65,12 @@ gradients pss st = gradient <$> ss
 cost :: [[Double]] -> TSNEState -> Double
 cost pss st = sumsum $ (zipWith.zipWith) c pss (qdist' (stSolution st))
     where
-        c p q = -p * log q 
+        c p q = -p * log q
 
 -- massiv versions
 
-stepTSNE_M :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability -> TSNEStateM -> m TSNEStateM
+stepTSNE_M :: MA.MonadThrow m =>
+  TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability -> TSNEStateM -> m TSNEStateM
 stepTSNE_M opts vs ps st =  do
   let i = stIterationM st
       s = stSolutionM st
@@ -82,31 +83,32 @@ stepTSNE_M opts vs ps st =  do
   MA.liftIO $ putStrLn $ "size of delta=" ++ show (MA.size d)
 -}
   gr <- gradientsM ps st
---  MA.liftIO $ putStrLn $ "size of gradient=" ++ show (MA.size gr)    
+--  MA.liftIO $ putStrLn $ "size of gradient=" ++ show (MA.size gr)
   let i' = i + 1
       g' = MA.computeAs MA.U $ MA.zipWith3 newGain g d gr
       d' = MA.computeAs MA.U $ MA.zipWith3 (newDelta (tsneLearningRate opts) i) g' d gr
 --  MA.liftIO $ putStrLn $ "size of g'=" ++ show (MA.size g')
---  MA.liftIO $ putStrLn $ "size of d'=" ++ show (MA.size d')    
-      s' = MA.computeAs MA.U $ recenterM $ MA.zipWith (+) s d'
---  MA.liftIO $ putStrLn $ "size of s' = recentered s+d'=" ++ show (MA.size s')    
+--  MA.liftIO $ putStrLn $ "size of d'=" ++ show (MA.size d')
+      s' = MA.computeAs MA.U $ recenterM $ MA.computeAs MA.U $ MA.zipWith (+) s d'
+--  MA.liftIO $ putStrLn $ "size of s' = recentered s+d'=" ++ show (MA.size s')
   return $ TSNEStateM i' s' g' d'
 
-gradientsM :: MA.MonadThrow m => MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)
-gradientsM pss st = fromOuterSlices $ MA.map gradient ssV
+gradientsM :: MA.MonadThrow m =>
+  MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)
+gradientsM pss st = MA.compute <$> MA.stackOuterSlicesM (MA.map gradient ssV)
     where
         ss = stSolutionM st
-        ssV :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM ss
-        pssV  = asVectorsM pss
---        gradient :: MA.Vector MA.U Double -> MA.Vector MA.U Gradient
-        gradient s = zipWith4M (f s) s pssV qssV qssV'
+        ssV :: MA.Vector MA.D (MA.Vector MA.M Double) = MA.outerSlices ss
+        pssV  = MA.outerSlices pss
         MA.Sz2 _ cols = MA.size ss
         i = stIterationM st -- Int
         qd = qdistM ss
-        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ qd -- MA.Matrix MA.D Double 
-        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = asVectorsM $ MA.computeAs MA.U $ qdistM'' qd -- MA.Matrix MA.D Double
+        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = MA.outerSlices qd
+        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = MA.outerSlices $ MA.computeAs MA.U $ qdistM'' qd
+        gradient :: MA.Vector MA.M Double -> MA.Vector MA.D Gradient
+        gradient s = MA.zipWith4 (f s) s pssV qssV qssV'
         f :: MA.Vector MA.M Double -> Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> Double
-        f s x ps qs qs' = MA.sum $ zipWith4M g s ps qs qs'
+        f s x ps qs qs' = MA.sum $ MA.zipWith4 g s ps qs qs'
             where
                 g y p q q' = m * (x - y)
                     where

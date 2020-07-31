@@ -70,10 +70,12 @@ runTSNE2D_M :: TSNEOptions
             -> MA.Matrix MA.U Probability
             -> TSNEStateM
             -> Producer TSNEOutput2D IO ()
-runTSNE2D_M opts vs ps st = do
-    yield $ output2D_M ps st
-    st' <- force <$> stepTSNE_M opts vs ps st
-    runTSNE2D_M opts vs ps st'
+runTSNE2D_M opts vs ps = go
+    where
+        go st = do
+            yield $ output2D_M ps st
+            st' <- force <$> stepTSNE_M opts vs ps st
+            go st'
 {-# INLINEABLE runTSNE2D_M #-}
 
 solution2D_M :: MA.Matrix MA.U Double -> [Position2D]
