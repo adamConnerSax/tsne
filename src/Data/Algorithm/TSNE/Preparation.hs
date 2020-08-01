@@ -70,15 +70,14 @@ entropyForInputValue beta bs a = sum $ map h bs
 
 -- Massiv versions
 
-neighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix MA.U Probability
-neighbourProbabilitiesM opts vs = symmetrizeSqM $ rawNeighbourProbabilitiesM opts vs
+neighbourProbabilitiesM :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> m (MA.Matrix MA.U Probability)
+neighbourProbabilitiesM opts vs = MA.compute @MA.U . symmetrizeSqM . MA.compute @MA.U <$> rawNeighbourProbabilitiesM opts vs
 {-# INLINEABLE neighbourProbabilitiesM #-}
 
 
-rawNeighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix MA.D Probability
-rawNeighbourProbabilitiesM opts vs =
-    MA.expandWithin @_ @_ @MA.N MA.Dim1 (MA.Sz1 inputRows) (\r j -> r MA.! j)
-    $ MA.makeArray MA.Seq (MA.Sz1 inputRows) np 
+rawNeighbourProbabilitiesM :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> m (MA.Matrix MA.DL Probability)
+rawNeighbourProbabilitiesM opts vs = MA.stackOuterSlicesM 
+                                     $ MA.makeArray @MA.D MA.Seq (MA.Sz1 inputRows) np 
     where
       MA.Sz2 inputRows inputCols = MA.size vs
       distances :: MA.Matrix MA.U Double
@@ -125,7 +124,7 @@ binarySearchBetaM' opts dists tol i beta r
 {-# INLINEABLE binarySearchBetaM' #-}
 
 entropyForInputValueM :: Double -> MA.Matrix MA.U Double -> MA.Ix1 -> Entropy
-entropyForInputValueM beta dists r = MA.sum $ MA.makeArray @MA.U MA.Seq (MA.Sz1 inputRows) (\r' -> h r') --Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ h r) bs
+entropyForInputValueM beta dists r = MA.sum $ MA.makeArray @MA.D MA.Seq (MA.Sz1 inputRows) (\r' -> h r')
   where
     MA.Sz2 inputRows _ = MA.size dists
     pj :: MA.Ix1 -> Double
@@ -133,7 +132,7 @@ entropyForInputValueM beta dists r = MA.sum $ MA.makeArray @MA.U MA.Seq (MA.Sz1 
       | r == r' = 0
       | otherwise = exp $ -(dists MA.!> r MA.!> r') * beta
     psum :: Double
-    psum = MA.sum $ MA.makeArray @MA.U MA.Seq (MA.Sz1 inputRows) (\r' -> pj r')
+    psum = MA.sum $ MA.makeArray @MA.D MA.Seq (MA.Sz1 inputRows) (\r' -> pj r')
     pj' :: MA.Ix1 -> Double
     pj' r' = pj r' / psum
     h :: MA.Ix1 -> Double

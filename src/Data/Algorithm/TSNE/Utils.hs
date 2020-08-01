@@ -79,10 +79,9 @@ distanceSquaredM :: (MA.Source r MA.Ix1 Double
 distanceSquaredM as bs = MA.sum $ MA.zipWith (\a b -> let x = a - b in x * x) as bs
 {-# INLINEABLE distanceSquaredM #-}
 
-symmetrizeSqM :: (MA.Numeric r Double
-                 , MA.Source r MA.Ix2 Double)
-              => MA.Matrix r Double -> MA.Matrix MA.U Double
-symmetrizeSqM m = MA.computeAs MA.U $ MA.zipWith f m (MA.transpose m) where
+symmetrizeSqM :: (MA.Source r MA.Ix2 Double)
+              => MA.Matrix r Double -> MA.Matrix MA.D Double
+symmetrizeSqM m = MA.zipWith f m (MA.transpose m) where
   MA.Sz2 r _ = MA.size m
   f :: Double -> Double -> Double
   f x y = max a 1e-100
