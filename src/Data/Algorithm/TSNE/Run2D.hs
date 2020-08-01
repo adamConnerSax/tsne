@@ -69,7 +69,7 @@ runTSNE2D_M :: TSNEOptions
             -> TSNEInputM
             -> MA.Matrix MA.U Probability
             -> TSNEStateM
-            -> Producer TSNEOutput2D IO ()
+            -> Producer TSNEOutput2D_M IO ()
 runTSNE2D_M opts vs ps = go
     where
         go st = do
@@ -78,12 +78,12 @@ runTSNE2D_M opts vs ps = go
             go st'
 {-# INLINEABLE runTSNE2D_M #-}
 
-solution2D_M :: MA.Matrix MA.U Double -> [Position2D]
-solution2D_M = solution2D . MA.toLists2
+solution2D_M :: MA.Matrix MA.U Double -> MA.Vector MA.U Position2D
+solution2D_M ma = MA.computeAs MA.U $ MA.zip (ma MA.<! 0) (ma MA.<! 1) 
 {-# INLINEABLE solution2D_M #-}
 
-output2D_M :: MA.Matrix MA.U Double -> TSNEStateM -> TSNEOutput2D
-output2D_M pss st = TSNEOutput2D i s c
+output2D_M :: MA.Matrix MA.U Double -> TSNEStateM -> TSNEOutput2D_M
+output2D_M pss st = TSNEOutput2D_M i s c
     where
         i = stIterationM st
         s = (solution2D_M . stSolutionM) st

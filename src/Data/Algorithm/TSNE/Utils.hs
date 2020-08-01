@@ -69,7 +69,6 @@ symmetricalMatrixFromTopRight tr = zipWith (++) bl tr
         ebl = zipWith take [0..] (reprep undefined)
 
 
-
 -- Massiv versions
 distanceSquaredM :: (MA.Source r MA.Ix1 Double
                     , MA.Source r' MA.Ix1 Double
@@ -101,7 +100,7 @@ qdistM :: MA.Matrix MA.U Double -> MA.Matrix MA.U Double
 qdistM ss =
   let MA.Sz2 c r = MA.size ss
       dist (i MA.:. j) =
-        let s = distanceSquaredM (ss MA.<! i) (ss MA.<! j)
+        let s = distanceSquaredM (ss MA.<! i) (ss MA.<!  j)
         in 1 / (1 + s)
   in MA.computeAs MA.U $ symmetric MA.Seq (MA.Sz1 r) dist
 {-# INLINEABLE qdistM #-}

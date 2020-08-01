@@ -71,7 +71,7 @@ entropyForInputValue beta bs a = sum $ map h bs
 -- Massiv versions
 
 neighbourProbabilitiesM :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> m (MA.Matrix MA.U Probability)
-neighbourProbabilitiesM opts vs = MA.compute @MA.U . symmetrizeSqM . MA.compute @MA.U <$> rawNeighbourProbabilitiesM opts vs
+neighbourProbabilitiesM opts vs = MA.compute @MA.U . symmetrizeSqM . MA.computeAs MA.U <$> rawNeighbourProbabilitiesM opts vs
 {-# INLINEABLE neighbourProbabilitiesM #-}
 
 

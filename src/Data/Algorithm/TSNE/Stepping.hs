@@ -119,7 +119,7 @@ gradientsM pss st = MA.compute <$> MA.stackOuterSlicesM (MA.map gradient ssV)
 
 
 costM :: MA.Source r MA.Ix2 Double => MA.Matrix r Double -> TSNEStateM -> Double
-costM pss st = MA.sum $ MA.zipWith c pss (qdistM' (stSolutionM st))
+costM pss st = MA.sum $ MA.zipWith c pss $ qdistM' $ stSolutionM st
   where
     c p q = -p * log q
 {-# INLINEABLE costM #-}

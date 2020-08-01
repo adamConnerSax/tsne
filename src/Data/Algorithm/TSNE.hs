@@ -3,14 +3,16 @@ module Data.Algorithm.TSNE (
         tsne3D,
         forTsne3D,
         TSNEOutput3D(..),
-        TSNEOutput3D_M(..),
+          TSNEOutput3D_M(..),
         tsne2D,
         forTsne2D,
         TSNEOutput2D(..),
+          TSNEOutput2D_M(..),
         tsne3D_M,
         forTsne3D_M,
         tsne2D_M,
-        forTsne2D_M
+        forTsne2D_M,
+        solutionToList
     ) where
 
 import Pipes
@@ -67,7 +69,7 @@ forTsne3D_M action opts seedM input = do
         lift $ action o
 
 -- | Generates an infinite stream of 2D tSNE iterations.
-tsne2D_M :: TSNEOptions -> Maybe Int -> TSNEInputM -> Producer TSNEOutput2D IO ()
+tsne2D_M :: TSNEOptions -> Maybe Int -> TSNEInputM -> Producer TSNEOutput2D_M IO ()
 tsne2D_M opts seedM input = do
   let MA.Sz2 inputLength _ = MA.size input
   st <- liftIO $ initState2D_M seedM inputLength
@@ -75,7 +77,7 @@ tsne2D_M opts seedM input = do
   runTSNE2D_M opts input ps st
 
 -- | Executes an IO action for each iteration of the 2D tSNE algorithm.
-forTsne2D_M :: (TSNEOutput2D -> IO ()) -> TSNEOptions -> Maybe Int -> TSNEInputM -> IO ()
+forTsne2D_M :: (TSNEOutput2D_M -> IO ()) -> TSNEOptions -> Maybe Int -> TSNEInputM -> IO ()
 forTsne2D_M action opts seedM input = do
     runEffect $ for (tsne2D_M opts seedM input) $ \o -> do
         lift $ action o

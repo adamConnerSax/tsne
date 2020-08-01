@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, FlexibleContexts #-}
 
 module Data.Algorithm.TSNE.Types where
 
@@ -7,8 +7,6 @@ import Control.DeepSeq
 import Data.Default
 import qualified Data.Massiv.Core as MA
 import qualified Data.Massiv.Array as MA
---import Linear.V2
---import Linear.V3
 
 data TSNEOptions = TSNEOptions {
     tsnePerplexity :: Int,
@@ -59,20 +57,20 @@ data TSNEState = TSNEState {
 type TSNEInputValueM =  MA.Vector MA.U Double
 type TSNEInputM =  MA.Matrix MA.U Double
 
+
 data TSNEOutput3D_M = TSNEOutput3D_M {
     tsneIteration3D_M :: Int,
-    tsneSolution3_M :: MA.Vector MA.U Position3D, -- Only if this is only for output.  Otherwise we need better.
+    tsneSolution3_M :: MA.Vector MA.U Position3D,
     tsneCost3D_M :: Double
 } deriving (Show, Eq)
 
 
-{-
 data TSNEOutput2D_M = TSNEOutput2D_M {
     tsneIteration2D_M :: Int,
-    tsneSolution2D_M :: [Position2D], -- Only if this is only for output.  Otherwise we need better.
+    tsneSolution2D_M :: MA.Vector MA.U Position2D,
     tsneCost2D_M :: Double
 } deriving (Show, Eq)
--}
+
 
 data TSNEStateM = TSNEStateM {
     stIterationM :: !Int,
@@ -80,3 +78,7 @@ data TSNEStateM = TSNEStateM {
     stGainsM :: !(MA.Matrix MA.U Gain), -- dimension (solution) x length (inputs)
     stDeltasM :: !(MA.Matrix MA.U Delta) -- dimension (solution) x length (inputs)
 } deriving (Show, Generic, NFData)
+
+
+solutionToList :: MA.Source r MA.Ix1 a => MA.Vector r a -> [a]
+solutionToList = MA.toList
