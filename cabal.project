@@ -4,7 +4,7 @@ packages: ./
 source-repository-package
   type: git
   location: https://github.com/lehins/massiv
-  tag: 4e9db8dd4862292b898d55985ffc120e835f2aaa
+  tag: a2e8c1933607ae15201d344617bab1d54e2f6175
   subdir: massiv
 
                   

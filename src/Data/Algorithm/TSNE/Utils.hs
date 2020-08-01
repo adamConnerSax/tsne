@@ -92,9 +92,6 @@ symmetrizeSqM m = MA.computeAs MA.U $ MA.zipWith f m (MA.transpose m) where
 recenterM :: MA.Manifest r MA.Ix2 Double => MA.Matrix r Double -> MA.Matrix MA.D Double
 recenterM m = MA.imap (\(i MA.:. _) e -> e - (meansV MA.! i)) m
     where
---      meansM = MA.makeArray MA.Seq (MA.Sz2 r c) (\ix -> let (r MA.:. c) = ix in meansV MA.! r)
---      meansV :: MA.Vector MA.U Double
-      --meansV = MA.computeAs MA.U $ MA.map (/ fromIntegral c) $ MA.foldlInner (+) 0 m -- fold over columns
       meansV = MA.computeAs MA.U $ MA.map (/ fromIntegral c) $ MA.foldlInner (+) 0 m -- fold over columns
       MA.Sz2 r c = MA.size m
 {-# INLINEABLE recenterM #-}
@@ -107,13 +104,13 @@ qdistM ss =
       dist (i MA.:. j) =
         let s = distanceSquaredM (ss MA.<! i) (ss MA.<! j)
         in 1 / (1 + s)
-  in MA.computeAs MA.U $ symmetric (MA.Sz1 r) dist
+  in MA.computeAs MA.U $ symmetric MA.Seq (MA.Sz1 r) dist
 {-# INLINEABLE qdistM #-}
 
-symmetric :: Num e => MA.Sz1 -> (MA.Ix2 -> e) -> MA.Matrix MA.DL e
-symmetric (MA.Sz1 n) f =
+symmetric :: Num e => MA.Comp -> MA.Sz1 -> (MA.Ix2 -> e) -> MA.Matrix MA.DL e
+symmetric comp (MA.Sz1 n) f =
   let sz = MA.Sz2 n n
-   in MA.makeLoadArray MA.Seq sz 0 $ \_scheduler wr ->
+   in MA.makeLoadArray comp sz 0 $ \_scheduler wr ->
         MA.forM_ (0 MA...: n) $ \i ->
           MA.forM_ ((i + 1) MA...: n) $ \j ->
             let ix = i MA.:. j

@@ -7,7 +7,8 @@ import Control.DeepSeq
 import Data.Default
 import qualified Data.Massiv.Core as MA
 import qualified Data.Massiv.Array as MA
-
+--import Linear.V2
+--import Linear.V3
 
 data TSNEOptions = TSNEOptions {
     tsnePerplexity :: Int,

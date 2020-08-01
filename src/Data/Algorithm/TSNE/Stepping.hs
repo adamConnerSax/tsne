@@ -92,6 +92,7 @@ stepTSNE_M opts vs ps st =  do
       s' = MA.computeAs MA.U $ recenterM $ MA.computeAs MA.U $ MA.zipWith (+) s d'
 --  MA.liftIO $ putStrLn $ "size of s' = recentered s+d'=" ++ show (MA.size s')
   return $ TSNEStateM i' s' g' d'
+{-# INLINEABLE stepTSNE_M #-}  
 
 gradientsM :: MA.MonadThrow m =>
   MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)

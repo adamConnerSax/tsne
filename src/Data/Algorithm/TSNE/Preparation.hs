@@ -78,58 +78,64 @@ neighbourProbabilitiesM opts vs = symmetrizeSqM $ rawNeighbourProbabilitiesM opt
 rawNeighbourProbabilitiesM :: TSNEOptions -> TSNEInputM -> MA.Matrix MA.D Probability
 rawNeighbourProbabilitiesM opts vs =
     MA.expandWithin @_ @_ @MA.N MA.Dim1 (MA.Sz1 inputRows) (\r j -> r MA.! j)
-    $ MA.makeArray MA.Seq (MA.Sz1 inputRows) $ \r -> np (vs MA.!> r)
+    $ MA.makeArray MA.Seq (MA.Sz1 inputRows) np 
     where
-        np :: MA.Vector MA.M Double -> MA.Vector MA.U Probability
-        np a = aps (beta a) vs a
-        beta a = betaValue $ binarySearchBetaM opts vs a
-        MA.Sz2 inputRows inputCols = MA.size vs
-        aps :: Double -> TSNEInputM -> MA.Vector MA.M Double -> MA.Vector MA.U Probability
-        aps beta bs a = MA.makeArray MA.Seq (MA.Sz1 inputRows) (\r -> pj' (vs MA.!> r))
-          where
-            pj :: MA.Vector MA.M Double -> Double
-            pj b
-              | a == b = 0
-              | otherwise = exp $ -(distanceSquaredM a b) * beta
-            psum :: Double  
-            psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
-            pj' :: MA.Vector MA.M Double -> Double
-            pj' b = pj b / psum
+      MA.Sz2 inputRows inputCols = MA.size vs
+      distances :: MA.Matrix MA.U Double
+      distances = MA.computeAs MA.U $ symmetric MA.Seq (MA.Sz1 inputRows)
+                  $ \(r MA.:. c) ->  if r == c
+                                     then 0
+                                     else distanceSquaredM (vs MA.!> r) (vs MA.!> c) 
+      np :: MA.Ix1 -> MA.Vector MA.U Probability
+      np r = aps (beta r) r
+      beta r = betaValue $ binarySearchBetaM opts distances r
+      aps :: Double -> MA.Ix1 -> MA.Vector MA.U Probability
+      aps beta r = MA.makeArray MA.Seq (MA.Sz1 inputRows) pj'
+        where
+          pj :: MA.Ix1 -> Double
+          pj r'
+            | r' == r = 0
+            | otherwise = exp $ -(distances MA.!> r MA.!> r') * beta
+          psum :: Double  
+          psum = MA.sum $ MA.makeArray @MA.U MA.Seq (MA.Sz1 inputRows) (\r' -> pj r') --Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
+          pj' :: MA.Ix1 -> Double
+          pj' r' = pj r' / psum
 {-# INLINEABLE rawNeighbourProbabilitiesM #-}
 
-binarySearchBetaM :: TSNEOptions -> TSNEInputM -> MA.Vector MA.M Double -> Beta
-binarySearchBetaM opts vs = binarySearchBetaM' opts vs 1e-4 0 (Beta 1 (-infinity) infinity)
+binarySearchBetaM :: TSNEOptions -> MA.Matrix MA.U Double -> MA.Ix1 -> Beta
+binarySearchBetaM opts dists = binarySearchBetaM' opts dists 1e-4 0 (Beta 1 (-infinity) infinity)
 {-# INLINEABLE binarySearchBetaM #-}
 
-binarySearchBetaM' :: TSNEOptions -> TSNEInputM -> Double -> Int -> Beta -> MA.Vector MA.M Double -> Beta
-binarySearchBetaM' opts bs tol i beta a
+binarySearchBetaM' :: TSNEOptions -> MA.Matrix MA.U Double -> Double -> Int -> Beta -> MA.Ix1 -> Beta
+binarySearchBetaM' opts dists tol i beta r
     | i == 50            = beta
     | abs (e - t) < tol  = beta
-    | e > t              = r $ incPrecision beta
-    | otherwise          = r $ decPrecision beta
+    | e > t              = f $ incPrecision beta
+    | otherwise          = f $ decPrecision beta
         where
             t = targetEntropy opts
-            e = entropyForInputValueM (betaValue beta) bs a
+            e = entropyForInputValueM (betaValue beta) dists r
             incPrecision (Beta b _ bmax)
                 | bmax == infinity = Beta (b * 2) b bmax
                 | otherwise        = Beta ((b + bmax) / 2) b bmax
             decPrecision (Beta b bmin _)
                 | bmin == -infinity = Beta (b / 2) bmin b
                 | otherwise         = Beta ((b + bmin) / 2) bmin b
-            r beta' = binarySearchBetaM' opts bs tol (i+1) beta' a
+            f beta' = binarySearchBetaM' opts dists tol (i+1) beta' r
 {-# INLINEABLE binarySearchBetaM' #-}
 
-entropyForInputValueM :: Double -> TSNEInputM -> MA.Vector MA.M Double -> Entropy
-entropyForInputValueM beta bs a = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ h r) bs
+entropyForInputValueM :: Double -> MA.Matrix MA.U Double -> MA.Ix1 -> Entropy
+entropyForInputValueM beta dists r = MA.sum $ MA.makeArray @MA.U MA.Seq (MA.Sz1 inputRows) (\r' -> h r') --Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ h r) bs
   where
-    pj :: MA.Vector MA.M Double -> Double
-    pj b
-      | (MA.toManifest a) == b = 0
-      | otherwise = exp $ -(distanceSquaredM a b) * beta
+    MA.Sz2 inputRows _ = MA.size dists
+    pj :: MA.Ix1 -> Double
+    pj r' 
+      | r == r' = 0
+      | otherwise = exp $ -(dists MA.!> r MA.!> r') * beta
     psum :: Double
-    psum = Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
-    pj' :: MA.Vector MA.M Double -> Double
-    pj' b = pj b / psum
-    h :: MA.Vector MA.M Double -> Double
-    h b = let x = pj' b in if x > 1e-7 then -x * log x else 0
+    psum = MA.sum $ MA.makeArray @MA.U MA.Seq (MA.Sz1 inputRows) (\r' -> pj r')
+    pj' :: MA.Ix1 -> Double
+    pj' r' = pj r' / psum
+    h :: MA.Ix1 -> Double
+    h r' = let x = pj' r' in if x > 1e-7 then -x * log x else 0
 {-# INLINEABLE entropyForInputValueM #-}
