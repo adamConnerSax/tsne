@@ -82,3 +82,7 @@ data TSNEStateM = TSNEStateM {
 
 solutionToList :: MA.Source r MA.Ix1 a => MA.Vector r a -> [a]
 solutionToList = MA.toList
+
+
+listToInput :: [[Double]] -> MA.Matrix MA.U Double
+listToInput = MA.fromLists' MA.Seq

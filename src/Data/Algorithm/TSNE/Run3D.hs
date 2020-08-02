@@ -80,7 +80,7 @@ runTSNE3D_M opts vs ps = go
 {-# INLINEABLE runTSNE3D_M #-}
 
 solution3D_M :: MA.Matrix MA.U Double -> MA.Vector MA.U Position3D
-solution3D_M ma = MA.computeAs MA.U $ MA.zip3 (ma MA.<! 0) (ma MA.<! 1) (ma MA.<! 2)
+solution3D_M ma = MA.computeAs MA.U $ MA.zip3 (ma MA.!> 0) (ma MA.!> 1) (ma MA.!> 2)
 {-# INLINEABLE solution3D_M #-}
 
 output3D_M :: MA.Matrix MA.U Double -> TSNEStateM -> TSNEOutput3D_M
