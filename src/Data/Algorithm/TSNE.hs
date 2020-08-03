@@ -61,12 +61,14 @@ tsne3D_M opts seedM input = do
   st <- liftIO $ initState3D_M seedM inputLength
   ps <- neighbourProbabilitiesM opts input
   runTSNE3D_M opts input ps st
+{-# INLINEABLE tsne3D_M #-}  
 
 -- | Executes an IO action for each iteration of the 3D tSNE algorithm.
 forTsne3D_M :: (TSNEOutput3D_M -> IO ()) -> TSNEOptions -> Maybe Int -> TSNEInputM -> IO ()
 forTsne3D_M action opts seedM input = do
     runEffect $ for (tsne3D_M opts seedM input) $ \o -> do
         lift $ action o
+{-# INLINEABLE forTsne3D_M #-}          
 
 -- | Generates an infinite stream of 2D tSNE iterations.
 tsne2D_M :: TSNEOptions -> Maybe Int -> TSNEInputM -> Producer TSNEOutput2D_M IO ()
@@ -75,9 +77,11 @@ tsne2D_M opts seedM input = do
   st <- liftIO $ initState2D_M seedM inputLength
   ps <- neighbourProbabilitiesM opts input
   runTSNE2D_M opts input ps st
+{-# INLINEABLE tsne2D_M #-}
 
 -- | Executes an IO action for each iteration of the 2D tSNE algorithm.
 forTsne2D_M :: (TSNEOutput2D_M -> IO ()) -> TSNEOptions -> Maybe Int -> TSNEInputM -> IO ()
 forTsne2D_M action opts seedM input = do
     runEffect $ for (tsne2D_M opts seedM input) $ \o -> do
         lift $ action o
+{-# INLINEABLE forTsne2D_M #-}          

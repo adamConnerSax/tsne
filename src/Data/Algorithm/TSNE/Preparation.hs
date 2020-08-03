@@ -74,7 +74,7 @@ neighbourProbabilitiesM :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> m (MA
 neighbourProbabilitiesM opts vs = MA.compute @MA.U . symmetrizeSqM . MA.computeAs MA.U <$> rawNeighbourProbabilitiesM opts vs
 {-# INLINEABLE neighbourProbabilitiesM #-}
 
-
+-- compute all the distances once and then all the rest is much faster.
 rawNeighbourProbabilitiesM :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> m (MA.Matrix MA.DL Probability)
 rawNeighbourProbabilitiesM opts vs = MA.stackOuterSlicesM 
                                      $ MA.makeArray @MA.D MA.Seq (MA.Sz1 inputRows) np 

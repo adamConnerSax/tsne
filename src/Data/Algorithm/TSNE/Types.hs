@@ -51,9 +51,6 @@ data TSNEState = TSNEState {
 
 -- Massiv Versions
 
---type Position2Dm = V.Vector U Double
---type Position3Dm = V.Vector U Double
-
 type TSNEInputValueM =  MA.Vector MA.U Double
 type TSNEInputM =  MA.Matrix MA.U Double
 
@@ -79,10 +76,12 @@ data TSNEStateM = TSNEStateM {
     stDeltasM :: !(MA.Matrix MA.U Delta) -- dimension (solution) x length (inputs)
 } deriving (Show, Generic, NFData)
 
+-- functions to allow use without explicitly depending on massiv
 
 solutionToList :: MA.Source r MA.Ix1 a => MA.Vector r a -> [a]
 solutionToList = MA.toList
-
+{-# INLINEABLE solutionToList #-}
 
 listToInput :: [[Double]] -> MA.Matrix MA.U Double
 listToInput = MA.fromLists' MA.Seq
+{-# INLINEABLE listToInput #-}

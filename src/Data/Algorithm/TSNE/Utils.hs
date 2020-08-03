@@ -116,7 +116,7 @@ symmetric comp (MA.Sz1 n) f =
              in wr ix e >> wr (j MA.:. i) e
 {-# INLINE symmetric #-}
 
-
+-- this saves computing qdistM twice in gradientsM.  Which might be most of the speedup!
 qdistM' :: MA.Matrix MA.U Double -> MA.Matrix MA.D Double
 qdistM' = qdistM'' . qdistM
 {-# INLINEABLE qdistM' #-}
@@ -128,35 +128,6 @@ qdistM'' qd =
   in MA.map f qd
 {-# INLINEABLE qdistM'' #-}
 
--- zipWith4M :: (MA.Index ix
---              , MA.Source r1 ix e1
---              , MA.Source r2 ix e2
---              , MA.Source r3 ix e3
---              , MA.Source r4 ix e4
---              )
---           => (e1 -> e2 -> e3 -> e4 -> e)
---          -> MA.Array r1 ix e1
---          -> MA.Array r2 ix e2
---          -> MA.Array r3 ix e3
---          -> MA.Array r4 ix e4
---          -> MA.Array MA.D ix e
--- zipWith4M f a1 a2 a3 a4 = MA.zipWith (\(e1, e2) (e3, e4) ->  f e1 e2 e3 e4) (MA.zip a1 a2) (MA.zip a3 a4)
--- {-# INLINEABLE zipWith4M #-}
-
--- asVectorsM :: MA.OuterSlice r MA.Ix2 e
---            => MA.Matrix r e -> MA.Vector MA.D (MA.Vector (MA.R r) e)
--- asVectorsM m =
---   let MA.Sz2 r c = MA.size m
---   in MA.makeArray MA.Seq (MA.Sz1 r) $ \r -> (m MA.!> r)
--- {-# INLINEABLE asVectorsM #-}
-
--- The issue here is that the vectors might not all be the same size.  So we give a size and raise and exception (??)
--- if we're wrong
--- asMatrixM ::
---   forall e r r'
---   .(MA.Manifest r MA.Ix1 (MA.Array r' MA.Ix1 e)
---    , MA.OuterSlice r' MA.Ix1 e
---    ) => MA.Vector r (MA.Vector r' e) -> MA.Matrix MA.U e
 asMatrixM ::
      ( MA.Mutable r1 MA.Ix2 e
      , MA.Source r2 Int (MA.Array r3 Int e)

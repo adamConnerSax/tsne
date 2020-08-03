@@ -42,7 +42,7 @@ packages:
 extra-deps:
 - normaldistribution-1.1.0.3
 - github: lehins/massiv
-  commit: 4e9db8dd4862292b898d55985ffc120e835f2aaa
+  commit: a2e8c1933607ae15201d344617bab1d54e2f6175
   subdirs:
     - massiv
 # - normaldistribution-1.1
