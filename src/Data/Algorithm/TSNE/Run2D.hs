@@ -1,9 +1,10 @@
+{-# LANGUAGE TypeApplications #-}
 module Data.Algorithm.TSNE.Run2D where
 
 import Control.Applicative
 import Control.DeepSeq
 import Data.Random.Normal (normalsIO', normal')
-import qualified System.Random as Random 
+import qualified System.Random as Random
 import Pipes
 
 import Data.Algorithm.TSNE.Types
@@ -52,8 +53,8 @@ initState2D_M seedM n = do
       $ TSNEStateM
       0
       s
-      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 2 n) 1)
-      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 2 n) 0)
+      (MA.replicate @MA.U MA.Seq (MA.Sz2 2 n) 1)
+      (MA.replicate @MA.U MA.Seq (MA.Sz2 2 n) 0)
 {-# INLINEABLE initState2D_M #-}
 
 -- we add the ability to specify the seed here so we can get deterministic output
@@ -79,7 +80,7 @@ runTSNE2D_M opts vs ps = go
 {-# INLINEABLE runTSNE2D_M #-}
 
 solution2D_M :: MA.Matrix MA.U Double -> MA.Vector MA.U Position2D
-solution2D_M ma = MA.computeAs MA.U $ MA.zip (ma MA.!> 0) (ma MA.!> 1) 
+solution2D_M ma = MA.computeAs MA.U $ MA.zip (ma MA.!> 0) (ma MA.!> 1)
 {-# INLINEABLE solution2D_M #-}
 
 output2D_M :: MA.Matrix MA.U Double -> TSNEStateM -> TSNEOutput2D_M

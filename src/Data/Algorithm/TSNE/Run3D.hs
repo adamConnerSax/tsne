@@ -1,9 +1,10 @@
+{-# LANGUAGE TypeApplications #-}
 module Data.Algorithm.TSNE.Run3D where
 
 import Control.Applicative
 import Control.DeepSeq
 import Data.Random.Normal (normalsIO', normal')
-import qualified System.Random as Random 
+import qualified System.Random as Random
 import Pipes
 
 import Data.Algorithm.TSNE.Types
@@ -53,8 +54,8 @@ initState3D_M seedM n = do
       $ TSNEStateM
       0
       s
-      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 3 n) 1)
-      (MA.compute $ MA.replicate MA.Seq (MA.Sz2 3 n) 0)
+      (MA.replicate @MA.U MA.Seq (MA.Sz2 3 n) 1)
+      (MA.replicate @MA.U MA.Seq (MA.Sz2 3 n) 0)
 {-# INLINEABLE initState3D_M #-}
 
 -- we add the ability to specify the seed here so we can get deterministic output
