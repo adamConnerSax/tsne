@@ -70,15 +70,15 @@ symmetricalMatrixFromTopRight tr = zipWith (++) bl tr
 
 
 -- Massiv versions
-distanceSquaredM :: (MA.Source r MA.Ix1 Double
-                    , MA.Source r' MA.Ix1 Double
+distanceSquaredM :: (MA.Source r Double
+                    , MA.Source r' Double
                     )
 
                  => MA.Vector r Double -> MA.Vector r' Double -> Double
 distanceSquaredM as bs = MA.sum $ MA.zipWith (\a b -> let x = a - b in x * x) as bs
 {-# INLINEABLE distanceSquaredM #-}
 
-symmetrizeSqM :: (MA.Source r MA.Ix2 Double)
+symmetrizeSqM :: (MA.Source r Double)
               => MA.Matrix r Double -> MA.Matrix MA.D Double
 symmetrizeSqM m = MA.zipWith f m (MA.transpose m) where
   MA.Sz2 r _ = MA.size m
@@ -87,7 +87,7 @@ symmetrizeSqM m = MA.zipWith f m (MA.transpose m) where
     where a = (x + y) / (2 * realToFrac r)
 {-# INLINEABLE symmetrizeSqM #-}
 
-recenterM :: MA.Manifest r MA.Ix2 Double => MA.Matrix r Double -> MA.Matrix MA.D Double
+recenterM :: MA.Manifest r Double => MA.Matrix r Double -> MA.Matrix MA.D Double
 recenterM m = MA.imap (\(i MA.:. _) e -> e - (meansV MA.! i)) m
     where
       meansV = MA.computeAs MA.U $ MA.map (/ fromIntegral c) $ MA.foldlInner (+) 0 m -- fold over columns
@@ -129,9 +129,9 @@ qdistM'' qd =
 {-# INLINEABLE qdistM'' #-}
 
 asMatrixM ::
-     ( MA.Mutable r1 MA.Ix2 e
-     , MA.Source r2 Int (MA.Array r3 Int e)
-     , MA.Source r3 Int e
+     ( MA.Mutable r1 e
+     , MA.Source r2 (MA.Array r3 Int e)
+     , MA.Source r3 e
      )
   => MA.Array r2 MA.Ix1 (MA.Array r3 MA.Ix1 e)
   -> MA.Array r1 MA.Ix2 e
@@ -147,10 +147,10 @@ asMatrixM vs =
 
 fromOuterSlices ::
      forall r r' ix e f m.
-     ( MA.Construct r ix e
-     , MA.Source r' (MA.Lower ix) e
-     , MA.Mutable r (MA.Lower ix) e
-     , MA.Resize r (MA.Lower ix)
+     ( MA.Load r ix e
+     , MA.Source r' e
+     , MA.Mutable r e
+     , MA.Index (MA.Lower ix)
      , Foldable f
      , MA.MonadThrow m
      )

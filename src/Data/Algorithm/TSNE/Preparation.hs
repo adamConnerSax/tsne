@@ -76,15 +76,15 @@ neighbourProbabilitiesM opts vs = MA.compute @MA.U . symmetrizeSqM . MA.computeA
 
 -- compute all the distances once and then all the rest is much faster.
 rawNeighbourProbabilitiesM :: MA.MonadThrow m => TSNEOptions -> TSNEInputM -> m (MA.Matrix MA.DL Probability)
-rawNeighbourProbabilitiesM opts vs = MA.stackOuterSlicesM 
-                                     $ MA.makeArray @MA.D MA.Seq (MA.Sz1 inputRows) np 
+rawNeighbourProbabilitiesM opts vs = MA.stackOuterSlicesM
+                                     $ MA.makeArray @MA.D MA.Seq (MA.Sz1 inputRows) np
     where
       MA.Sz2 inputRows inputCols = MA.size vs
       distances :: MA.Matrix MA.U Double
       distances = MA.computeAs MA.U $ symmetric MA.Seq (MA.Sz1 inputRows)
                   $ \(r MA.:. c) ->  if r == c
                                      then 0
-                                     else distanceSquaredM (vs MA.!> r) (vs MA.!> c) 
+                                     else distanceSquaredM (vs MA.!> r) (vs MA.!> c)
       np :: MA.Ix1 -> MA.Vector MA.U Probability
       np r = aps (beta r) r
       beta r = betaValue $ binarySearchBetaM opts distances r
@@ -94,8 +94,9 @@ rawNeighbourProbabilitiesM opts vs = MA.stackOuterSlicesM
           pj :: MA.Ix1 -> Double
           pj r'
             | r' == r = 0
-            | otherwise = exp $ -(distances MA.!> r MA.!> r') * beta
-          psum :: Double  
+            | otherwise = exp $ -(distances MA.!> r MA.! r') * beta
+--            | otherwise = let ix = r MA.:. r' in exp $ -(distances MA.! ix) * beta
+          psum :: Double
           psum = MA.sum $ MA.makeArray @MA.U MA.Seq (MA.Sz1 inputRows) (\r' -> pj r') --Monoid.getSum $ MA.foldOuterSlice (\r -> Monoid.Sum $ pj r) bs
           pj' :: MA.Ix1 -> Double
           pj' r' = pj r' / psum
@@ -128,9 +129,10 @@ entropyForInputValueM beta dists r = MA.sum $ MA.makeArray @MA.D MA.Seq (MA.Sz1 
   where
     MA.Sz2 inputRows _ = MA.size dists
     pj :: MA.Ix1 -> Double
-    pj r' 
+    pj r'
       | r == r' = 0
-      | otherwise = exp $ -(dists MA.!> r MA.!> r') * beta
+      | otherwise = exp $ -(dists MA.!> r MA.! r') * beta
+--      | otherwise = let ix = r MA.:. r' in exp $ -(dists MA.! ix) * beta
     psum :: Double
     psum = MA.sum $ MA.makeArray @MA.D MA.Seq (MA.Sz1 inputRows) (\r' -> pj r')
     pj' :: MA.Ix1 -> Double

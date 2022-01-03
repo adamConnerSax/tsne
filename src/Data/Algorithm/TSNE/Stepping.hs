@@ -82,23 +82,24 @@ stepTSNE_M opts vs ps st =  do
       d' = MA.computeAs MA.U $ MA.zipWith3 (newDelta (tsneLearningRate opts) i) g' d gr
       s' = MA.computeAs MA.U $ recenterM $ MA.computeAs MA.U $ MA.zipWith (+) s d'
   return $ TSNEStateM i' s' g' d'
-{-# INLINEABLE stepTSNE_M #-}  
+{-# INLINEABLE stepTSNE_M #-}
 
+-- not sure if U is right here ??
 gradientsM :: MA.MonadThrow m =>
   MA.Matrix MA.U Probability -> TSNEStateM -> m (MA.Matrix MA.U Gradient)
 gradientsM pss st = MA.compute <$> MA.stackOuterSlicesM (MA.map gradient ssV)
     where
         ss = stSolutionM st
-        ssV :: MA.Vector MA.D (MA.Vector MA.M Double) = MA.outerSlices ss
+        ssV :: MA.Vector MA.D (MA.Vector MA.U Double) = MA.outerSlices ss
         pssV  = MA.outerSlices pss
         MA.Sz2 _ cols = MA.size ss
         i = stIterationM st -- Int
         qd = qdistM ss
-        qssV  :: MA.Vector MA.D (MA.Vector MA.M Double) = MA.outerSlices qd
-        qssV' :: MA.Vector MA.D (MA.Vector MA.M Double) = MA.outerSlices $ MA.computeAs MA.U $ qdistM'' qd
-        gradient :: MA.Vector MA.M Double -> MA.Vector MA.D Gradient
+        qssV  :: MA.Vector MA.D (MA.Vector MA.U Double) = MA.outerSlices qd
+        qssV' :: MA.Vector MA.D (MA.Vector MA.U Double) = MA.outerSlices $ MA.computeAs MA.U $ qdistM'' qd
+        gradient :: MA.Vector MA.U Double -> MA.Vector MA.D Gradient
         gradient s = MA.zipWith4 (f s) s pssV qssV qssV'
-        f :: MA.Vector MA.M Double -> Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> MA.Vector MA.M Double -> Double
+        f :: MA.Vector MA.U Double -> Double -> MA.Vector MA.U Double -> MA.Vector MA.U Double -> MA.Vector MA.U Double -> Double
         f s x ps qs qs' = MA.sum $ MA.zipWith4 g s ps qs qs'
             where
                 g y p q q' = m * (x - y)
@@ -108,7 +109,7 @@ gradientsM pss st = MA.compute <$> MA.stackOuterSlicesM (MA.map gradient ssV)
 {-# INLINEABLE gradientsM #-}
 
 
-costM :: MA.Source r MA.Ix2 Double => MA.Matrix r Double -> TSNEStateM -> Double
+costM :: MA.Source r Double => MA.Matrix r Double -> TSNEStateM -> Double
 costM pss st = MA.sum $ MA.zipWith c pss $ qdistM' $ stSolutionM st
   where
     c p q = -p * log q

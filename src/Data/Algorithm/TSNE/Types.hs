@@ -78,7 +78,7 @@ data TSNEStateM = TSNEStateM {
 
 -- functions to allow use without explicitly depending on massiv
 
-solutionToList :: MA.Source r MA.Ix1 a => MA.Vector r a -> [a]
+solutionToList :: MA.Source r a => MA.Vector r a -> [a]
 solutionToList = MA.toList
 {-# INLINEABLE solutionToList #-}
 

@@ -24,34 +24,34 @@ inputSize :: TSNEInput -> Int
 inputSize = length
 
 inputValueSize :: TSNEInput -> Int
-inputValueSize i = w 
-    where (w,h) = shape2D i 
+inputValueSize i = w
+    where (w,h) = shape2D i
 
 inputIsValid :: TSNEInput -> Either String ()
 inputIsValid [] = Left "empty input data"
 inputIsValid xss
     | not (isRectangular xss) = Left "input data values are not all the same length"
-    | otherwise = Right () 
+    | otherwise = Right ()
 
 isValidStateForInput :: Int -> TSNEInput -> TSNEState -> Either String ()
 isValidStateForInput d i st
-    | not (has2DShape (n,d) s) = Left $ "solution is wrong shape: " ++ show (shape2D s) 
+    | not (has2DShape (n,d) s) = Left $ "solution is wrong shape: " ++ show (shape2D s)
     | otherwise = Right ()
         where
             n = inputSize i
-            s = stSolution st  
+            s = stSolution st
 
 -- Massiv versions
-isSquareM :: MA.Load r MA.Ix2 a => Int -> MA.Matrix r a -> Bool
+isSquareM :: MA.Size r => MA.Load r MA.Ix2 a => Int -> MA.Matrix r a -> Bool
 isSquareM n mat = let (MA.Sz2 r c) = MA.size mat in (r == c) && (r == n)
 {-# INLINEABLE isSquareM #-}
 
-has2DShapeM :: MA.Load r MA.Ix2 a => (Int, Int) -> MA.Matrix r a -> Bool
+has2DShapeM :: (MA.Size r, MA.Load r MA.Ix2 a) => (Int, Int) -> MA.Matrix r a -> Bool
 has2DShapeM (w, h) mat = let (MA.Sz2 r c) = MA.size mat in (h == r) && (w == c)
 {-# INLINEABLE has2DShapeM #-}
 
 -- This is flipped from row, col for some reason
-shape2D_M :: MA.Load r MA.Ix2 a => MA.Matrix r a -> (Int, Int)
+shape2D_M :: (MA.Size r, MA.Load r MA.Ix2 a) => MA.Matrix r a -> (Int, Int)
 shape2D_M mat = let (MA.Sz2 r c) = MA.size mat in (c, r)
 {-# INLINEABLE shape2D_M #-}
 
@@ -78,4 +78,3 @@ isValidStateForInputM d i st
     n = inputSizeM i
     s = stSolutionM st
 {-# INLINEABLE isValidStateForInputM #-}
-

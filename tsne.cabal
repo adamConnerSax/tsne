@@ -28,7 +28,7 @@ library
                        normaldistribution,
                        pipes,
                        random >= 1.2 && < 1.3,
-                       massiv >= 0.6 && < 0.7
+                       massiv >= 1.0 && < 1.1
   ghc-options:         -O2
   default-language:    Haskell2010
 
